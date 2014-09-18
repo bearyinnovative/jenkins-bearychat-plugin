@@ -17,12 +17,12 @@
         <version>1.447</version>
     </parent>
 
-	<artifactId>slack</artifactId>
+	<artifactId>bearychat</artifactId>
 	<packaging>hpi</packaging>
 	<version>1.7-SNAPSHOT</version>
-	<name>Slack Notification Plugin</name>
-	<description>A Build status publisher that notifies channels on a Slack team</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Slack+Plugin</url>
+	<name>Bearychat Notification Plugin</name>
+	<description>A Build status publisher that notifies channels on a Bearychat team</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Bearychat+Plugin</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -37,9 +37,9 @@
 	</licenses>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/jenkinsci/slack-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/slack-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/slack-plugin</url>
+        <connection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</developerConnection>
+        <url>https://github.com/bearyinnovative/jenkins-bearychat-plugin</url>
     </scm>
 
 	<dependencies>
