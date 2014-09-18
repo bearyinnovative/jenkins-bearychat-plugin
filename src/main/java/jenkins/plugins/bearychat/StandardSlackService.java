@@ -19,7 +19,8 @@ public class StandardBearychatService implements BearychatService {
 
     private static final Logger logger = Logger.getLogger(StandardBearychatService.class.getName());
 
-    private String host = "bearychat.com";
+    // TODO: rm stage
+    private String host = "stage.bearychat.com";
     private String teamDomain;
     private String token;
     private String[] roomIds;
@@ -37,29 +38,33 @@ public class StandardBearychatService implements BearychatService {
 
     public void publish(String message, String color) {
         for (String roomId : roomIds) {
-            String url = "https://" + teamDomain + "." + host + "/services/hooks/jenkins-ci?token=" + token;
+            // TODO: https
+            String url = "http://" + teamDomain + "." + host + "/robots/hooks/jenkins/" + token;
             logger.info("Posting: to " + roomId + " on " + teamDomain + " using " + url +": " + message + " " + color);
             HttpClient client = getHttpClient();
             PostMethod post = new PostMethod(url);
             JSONObject json = new JSONObject();
 
             try {
-                JSONObject field = new JSONObject();
-                field.put("short", false);
-                field.put("value", message);
+                //JSONObject field = new JSONObject();
+                //field.put("short", false);
+                //field.put("value", message);
 
-                JSONArray fields = new JSONArray();
-                fields.put(field);
+                //JSONArray fields = new JSONArray();
+                //fields.put(field);
 
-                JSONObject attachment = new JSONObject();
-                attachment.put("color", color);
-                attachment.put("fields", fields);
-                JSONArray attachments = new JSONArray();
-                attachments.put(attachment);
+                //JSONObject attachment = new JSONObject();
 
+                // TODO: 暂时不需要color
+                // 也不需要attachment
+                //attachment.put("color", color);
+                //attachment.put("fields", fields);
+                //JSONArray attachments = new JSONArray();
+
+                //attachments.put(attachment);
                 json.put("channel", roomId);
-                json.put("attachments", attachments);
-
+                json.put("content", message);
+                //json.put("attachments", attachments);
                 post.addParameter("payload", json.toString());
                 post.getParams().setContentCharset("UTF-8");
                 int responseCode = client.executeMethod(post);
