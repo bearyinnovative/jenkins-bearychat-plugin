@@ -30,7 +30,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void invalidTokenShouldFail() {
-        StandardBearychatService service = new StandardBearychatService("tinyspeck", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("beary", "token", "#general");
         service.publish("message");
     }
 }
