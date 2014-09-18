@@ -1,17 +1,17 @@
-package jenkins.plugins.slack;
+package jenkins.plugins.bearychat;
 
-import jenkins.plugins.slack.StandardSlackService;
+import jenkins.plugins.bearychat.StandardBearychatService;
 import org.junit.Before;
 import org.junit.Test;
 
-public class StandardSlackServiceTest {
+public class StandardBearychatServiceTest {
 
     /**
      * Publish should generally not rethrow exceptions, or it will cause a build job to fail at end.
      */
     @Test
     public void publishWithBadHostShouldNotRethrowExceptions() {
-        StandardSlackService service = new StandardSlackService("foo", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("foo", "token", "#general");
         service.setHost("hostvaluethatwillcausepublishtofail");
         service.publish("message");
     }
@@ -21,7 +21,7 @@ public class StandardSlackServiceTest {
      */
     @Test
     public void invalidTeamDomainShouldFail() {
-        StandardSlackService service = new StandardSlackService("my", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("my", "token", "#general");
         service.publish("message");
     }
 
@@ -30,7 +30,7 @@ public class StandardSlackServiceTest {
      */
     @Test
     public void invalidTokenShouldFail() {
-        StandardSlackService service = new StandardSlackService("tinyspeck", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("tinyspeck", "token", "#general");
         service.publish("message");
     }
 }
