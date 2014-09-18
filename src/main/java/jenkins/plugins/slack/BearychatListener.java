@@ -1,4 +1,4 @@
-package jenkins.plugins.slack;
+package jenkins.plugins.bearychat;
 
 import hudson.Extension;
 import hudson.model.AbstractBuild;
@@ -13,11 +13,11 @@ import java.util.logging.Logger;
 
 @Extension
 @SuppressWarnings("rawtypes")
-public class SlackListener extends RunListener<AbstractBuild> {
+public class BearychatListener extends RunListener<AbstractBuild> {
 
-    private static final Logger logger = Logger.getLogger(SlackListener.class.getName());
+    private static final Logger logger = Logger.getLogger(BearychatListener.class.getName());
 
-    public SlackListener() {
+    public BearychatListener() {
         super(AbstractBuild.class);
     }
 
@@ -49,8 +49,8 @@ public class SlackListener extends RunListener<AbstractBuild> {
     FineGrainedNotifier getNotifier(AbstractProject project) {
         Map<Descriptor<Publisher>, Publisher> map = project.getPublishersList().toMap();
         for (Publisher publisher : map.values()) {
-            if (publisher instanceof SlackNotifier) {
-                return new ActiveNotifier((SlackNotifier) publisher);
+            if (publisher instanceof BearychatNotifier) {
+                return new ActiveNotifier((BearychatNotifier) publisher);
             }
         }
         return new DisabledNotifier();

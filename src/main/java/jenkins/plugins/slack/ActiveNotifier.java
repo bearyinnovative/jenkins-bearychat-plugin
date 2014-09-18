@@ -1,4 +1,4 @@
-package jenkins.plugins.slack;
+package jenkins.plugins.bearychat;
 
 import hudson.Util;
 import hudson.model.*;
@@ -16,19 +16,19 @@ import java.util.logging.Logger;
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
 
-    private static final Logger logger = Logger.getLogger(SlackListener.class.getName());
+    private static final Logger logger = Logger.getLogger(BearychatListener.class.getName());
 
-    SlackNotifier notifier;
+    BearychatNotifier notifier;
 
-    public ActiveNotifier(SlackNotifier notifier) {
+    public ActiveNotifier(BearychatNotifier notifier) {
         super();
         this.notifier = notifier;
     }
 
-    private SlackService getSlack(AbstractBuild r) {
+    private BearychatService getBearychat(AbstractBuild r) {
         AbstractProject<?, ?> project = r.getProject();
-        String projectRoom = Util.fixEmpty(project.getProperty(SlackNotifier.SlackJobProperty.class).getRoom());
-        return notifier.newSlackService(projectRoom);
+        String projectRoom = Util.fixEmpty(project.getProperty(BearychatNotifier.BearychatJobProperty.class).getRoom());
+        return notifier.newBearychatService(projectRoom);
     }
 
     public void deleted(AbstractBuild r) {
@@ -50,7 +50,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     private void notifyStart(AbstractBuild build, String message) {
-        getSlack(build).publish(message, "good");
+        getBearychat(build).publish(message, "good");
     }
 
     public void finalized(AbstractBuild r) {
@@ -58,7 +58,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     public void completed(AbstractBuild r) {
         AbstractProject<?, ?> project = r.getProject();
-        SlackNotifier.SlackJobProperty jobProperty = project.getProperty(SlackNotifier.SlackJobProperty.class);
+        BearychatNotifier.BearychatJobProperty jobProperty = project.getProperty(BearychatNotifier.BearychatJobProperty.class);
         Result result = r.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousBuild();
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
@@ -68,7 +68,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 || (result == Result.SUCCESS && previousResult == Result.FAILURE && jobProperty.getNotifyBackToNormal())
                 || (result == Result.SUCCESS && jobProperty.getNotifySuccess())
                 || (result == Result.UNSTABLE && jobProperty.getNotifyUnstable())) {
-            getSlack(r).publish(getBuildStatusMessage(r), getBuildColor(r));
+            getBearychat(r).publish(getBuildStatusMessage(r), getBuildColor(r));
         }
     }
 
@@ -123,10 +123,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     public static class MessageBuilder {
         private StringBuffer message;
-        private SlackNotifier notifier;
+        private BearychatNotifier notifier;
         private AbstractBuild build;
 
-        public MessageBuilder(SlackNotifier notifier, AbstractBuild build) {
+        public MessageBuilder(BearychatNotifier notifier, AbstractBuild build) {
             this.notifier = notifier;
             this.message = new StringBuffer();
             this.build = build;

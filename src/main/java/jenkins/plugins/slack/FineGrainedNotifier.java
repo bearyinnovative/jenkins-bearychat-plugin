@@ -1,4 +1,4 @@
-package jenkins.plugins.slack;
+package jenkins.plugins.bearychat;
 
 import hudson.model.AbstractBuild;
 

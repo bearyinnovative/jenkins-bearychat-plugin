@@ -1,4 +1,4 @@
-package jenkins.plugins.slack;
+package jenkins.plugins.bearychat;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
@@ -15,16 +15,16 @@ import hudson.ProxyConfiguration;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 
-public class StandardSlackService implements SlackService {
+public class StandardBearychatService implements BearychatService {
 
-    private static final Logger logger = Logger.getLogger(StandardSlackService.class.getName());
+    private static final Logger logger = Logger.getLogger(StandardBearychatService.class.getName());
 
-    private String host = "slack.com";
+    private String host = "bearychat.com";
     private String teamDomain;
     private String token;
     private String[] roomIds;
 
-    public StandardSlackService(String teamDomain, String token, String roomId) {
+    public StandardBearychatService(String teamDomain, String token, String roomId) {
         super();
         this.teamDomain = teamDomain;
         this.token = token;
@@ -65,10 +65,10 @@ public class StandardSlackService implements SlackService {
                 int responseCode = client.executeMethod(post);
                 String response = post.getResponseBodyAsString();
                 if(responseCode != HttpStatus.SC_OK) {
-                    logger.log(Level.WARNING, "Slack post may have failed. Response: " + response);
+                    logger.log(Level.WARNING, "Bearychat post may have failed. Response: " + response);
                 }
             } catch (Exception e) {
-                logger.log(Level.WARNING, "Error posting to Slack", e);
+                logger.log(Level.WARNING, "Error posting to Bearychat", e);
             } finally {
                 logger.info("Posting succeeded");
                 post.releaseConnection();
