@@ -63,7 +63,7 @@ public class StandardBearychatService implements BearychatService {
 
                 //attachments.put(attachment);
                 json.put("channel", roomId);
-                json.put("content", message);
+                json.put("text", message);
                 //json.put("attachments", attachments);
                 post.addParameter("payload", json.toString());
                 post.getParams().setContentCharset("UTF-8");
