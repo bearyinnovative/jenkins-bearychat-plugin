@@ -20,7 +20,7 @@ public class StandardBearychatService implements BearychatService {
     private static final Logger logger = Logger.getLogger(StandardBearychatService.class.getName());
 
     // TODO: rm stage
-    private String host = "stage.bearychat.com";
+    private String host = "bearychat.com";
     private String teamDomain;
     private String token;
     private String[] roomIds;
