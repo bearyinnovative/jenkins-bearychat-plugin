@@ -1,4 +1,4 @@
-## Slack plugin for Jenkins
+## Bearychat plugin for Jenkins
 
 Started with a fork of the Slack plugin:
 
