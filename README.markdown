@@ -6,6 +6,6 @@ https://github.com/jenkinsci/slack-plugin
 
 ### Instructions
 
-1. Get a Slack account: https://bearychat.com/
-;; 2. Configure the Jenkins integration: https://my..com/services/new/jenkins-ci
-3. Install this plugin on your Jenkins server
+1. Get a Bearychat account: https://bearychat.com/
+2. Install this plugin on your Jenkins server
+3. http://yourteam.bearychat.com/integrations finish jenkins robot configuration

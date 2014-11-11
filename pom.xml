@@ -37,9 +37,9 @@
 	</licenses>
 
     <scm>
-        <connection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</developerConnection>
-        <url>https://github.com/bearyinnovative/jenkins-bearychat-plugin</url>
+        <connection>scm:git:ssh://git@github.com/jenkinsci/bearychat-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/bearychat-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/bearychat-plugin</url>
     </scm>
 
 	<dependencies>
@@ -102,9 +102,9 @@
 
     <developers>
         <developer>
-          <id>grantmd</id>
-          <name>Myles Grant</name>
-          <email>myles@tinyspeck.com</email>
+          <id>otbzi</id>
+          <name>Fanyu Zeng</name>
+          <email>ottbzi@bearyinnovative.com</email>
         </developer>
     </developers>
 
