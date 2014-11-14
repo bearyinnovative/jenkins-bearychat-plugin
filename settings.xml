@@ -1,6 +1,6 @@
 <settings>
  <!-- Added Jenkins repositories -->
- <!-- Your should place this file to ~/.m2 -->
+ <!-- You should place this file to ~/.m2 -->
  <profiles>
    <profile>
      <id>jenkins</id>
