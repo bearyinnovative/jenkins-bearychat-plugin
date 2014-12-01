@@ -11,7 +11,7 @@
 
   <artifactId>bearychat</artifactId>
   <packaging>hpi</packaging>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0</version>
   <name>Bearychat Notification Plugin</name>
   <description>A Build status publisher that notifies channels on a BearyChat team</description>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/BearyChat+Plugin</url>
