@@ -1,8 +1,8 @@
-## Bearychat plugin for Jenkins
+## BearyChat plugin for Jenkins
 
-Started with a fork of the Bearychat plugin:
+Started with a fork of the BearyChat plugin:
 
-https://github.com/jenkinsci/slack-plugin
+https://github.com/jenkinsci/bearychat-plugin
 
 ### Instructions
 
