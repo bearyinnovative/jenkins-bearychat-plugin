@@ -38,8 +38,7 @@ public class StandardBearychatService implements BearychatService {
 
     public void publish(String message, String color) {
         for (String roomId : roomIds) {
-            // TODO: https
-            String url = "http://" + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
+            String url = "https://" + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
             logger.info("Posting: to " + roomId + " on " + teamDomain + " using " + url +": " + message + " " + color);
             HttpClient client = getHttpClient();
             PostMethod post = new PostMethod(url);
