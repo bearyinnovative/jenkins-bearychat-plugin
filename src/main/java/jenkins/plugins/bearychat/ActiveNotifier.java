@@ -7,6 +7,8 @@ import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
 import org.apache.commons.lang.StringUtils;
 
+import jenkins.model.JenkinsLocationConfiguration;
+
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -125,6 +127,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         private StringBuffer message;
         private BearychatNotifier notifier;
         private AbstractBuild build;
+        private JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
 
         public MessageBuilder(BearychatNotifier notifier, AbstractBuild build) {
             this.notifier = notifier;
@@ -165,16 +168,36 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         private MessageBuilder startMessage() {
-            message.append(this.escape(build.getProject().getDisplayName()));
-            message.append(" - ");
-            message.append(this.escape(build.getDisplayName()));
-            message.append(" ");
+            String serverUrl = globalConfig.getUrl();
+
+            if (serverUrl != null && !"".equals(serverUrl)) {
+                String projectName = build.getProject().getName();
+                String projectUrl = serverUrl + "/job/" + projectName;
+                String projectInfo = "[" + projectName + "]" + "(" + projectUrl + ")";
+
+                String id = build.getId();
+                String jobName = build.getDisplayName();
+                String jobUrl = projectUrl + "/" + id;
+                String jobInfo = "[" + jobName + "]" + "(" + jobUrl + ")";
+
+                message.append(this.escape(projectInfo));
+                message.append(" - ");
+                message.append(this.escape(jobInfo));
+                message.append(" ");
+            } else {
+                message.append(this.escape(build.getProject().getDisplayName()));
+                message.append(" - ");
+                message.append(this.escape(build.getDisplayName()));
+                message.append(" ");
+            }
+
             return this;
         }
 
         public MessageBuilder appendOpenLink() {
-            String url = notifier.getBuildServerUrl() + build.getUrl();
-            message.append(" (<").append(url).append("|Open>)");
+            // ignore this link
+            // String url = notifier.getBuildServerUrl() + build.getUrl();
+            // message.append(" (<").append(url).append("|Open>)");
             return this;
         }
 
