@@ -7,5 +7,5 @@ public interface BearychatService {
 
     void publish(String message, String color);
 
-    void publish(String message, Map<String, String> content, String color);
+    void publish(String action, Map<String, Object> dataMap);
 }

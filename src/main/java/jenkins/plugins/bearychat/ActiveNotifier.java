@@ -39,61 +39,76 @@ public class ActiveNotifier implements FineGrainedNotifier {
     public void deleted(AbstractBuild r) {
     }
 
-    public Map<String, String> getContent(String action, AbstractBuild build){
+    public Map<String, Object> getData(AbstractBuild build){
         JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
-        String serverUrl = globalConfig.getUrl();
+        String configUrl = globalConfig.getUrl();
+        String configName = globalConfig.getDisplayName();
 
-        Map<String, String> contentMap = new HashMap<String, String>();
-        String projectName = build.getProject().getName();
-        String projectUrl = serverUrl + "/job/" + projectName;
+        Map<String, String> configMap = new HashMap<String, String>();
+        configMap.put("config_url", configUrl);
+        configMap.put("config_Name", configName);
+
+
+        AbstractProject<?, ?> project = build.getProject();
+        String projectName = project.getName();
+        String projectAbsoluteUrl = project.getAbsoluteUrl();
+        String projectFullName = project.getFullName();
+        String projectDisplayName = project.getFullDisplayName();
+
+        Map<String, String> projectMap = new HashMap<String, String>();
+        projectMap.put("name", projectName);
+        projectMap.put("full_name", projectFullName);
+        projectMap.put("display_name", projectDisplayName);
+        projectMap.put("absolute_url", projectAbsoluteUrl);
+
+
 
         String id = build.getId();
-        String jobName = build.getDisplayName();
-        String jobUrl = projectUrl + "/" + id;
-
+        int number = build.getNumber();
+        String jobFullName = build.getFullDisplayName();
+        String jobDisplayName = build.getDisplayName();
         String duration = build.getDurationString();
-
         String status = MessageBuilder.getStatusMessage(build);
 
-
-        contentMap.put("action", action);
-
-        contentMap.put("project_name", projectName);
-        contentMap.put("project_url", projectUrl);
-        contentMap.put("job_id", id);
-        contentMap.put("job_name", jobName);
-        contentMap.put("job_url", jobUrl);
-        contentMap.put("status", status);
-        contentMap.put("duration", duration);
+        Map<String, String> jobMap = new HashMap<String, String>();
+        jobMap.put("id", id);
+        jobMap.put("number", number+"");
+        jobMap.put("full_name", jobFullName);
+        jobMap.put("display_name", jobDisplayName);
+        jobMap.put("status", status);
+        jobMap.put("duration", duration);
 
 
 
-        if (!build.hasChangeSetComputed()) {
-            logger.info("No change set computed...");
-            return null;
-        }
         ChangeLogSet changeSet = build.getChangeSet();
         List<Entry> entries = new LinkedList<Entry>();
         Set<AffectedFile> files = new HashSet<AffectedFile>();
         for (Object o : changeSet.getItems()) {
             Entry entry = (Entry) o;
-            logger.info("Entry " + o);
             entries.add(entry);
             files.addAll(entry.getAffectedFiles());
         }
-        if (entries.isEmpty()) {
-            logger.info("Empty change...");
-            return null;
-        }
+
+
+        String nonsense= "remotenonsense";
         Set<String> authors = new HashSet<String>();
         for (Entry entry : entries) {
-            authors.add(entry.getAuthor().getDisplayName());
+            String displayName = entry.getAuthor().getDisplayName();
+            if(!"".equals(nonsense)){
+                authors.add(displayName);
+            }
         }
 
-        contentMap.put("files", files.size() + "");
-        contentMap.put("authors", StringUtils.join(authors, ", "));
+        Map<String, Object> result = new HashMap<String, Object>();
 
-        return contentMap;
+        result.put("files", files.size() + "");
+        result.put("authors", StringUtils.join(authors, ", "));
+
+        result.put("project", projectMap);
+        result.put("job", jobMap);
+        result.put("config", configMap);
+
+        return result;
     }
 
     public void started(AbstractBuild build) {
@@ -112,16 +127,20 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     private void notifyStart(AbstractBuild build, String message) {
-        getBearychat(build).publish(message, getContent("start", build), "good");
+    String action = "start";
+    Map<String, Object> dataMap = getData(build);
+    dataMap.put("message", message);
+    dataMap.put("color", "good");
+        getBearychat(build).publish(action, dataMap);
     }
 
     public void finalized(AbstractBuild r) {
     }
 
-    public void completed(AbstractBuild r) {
-        AbstractProject<?, ?> project = r.getProject();
+    public void completed(AbstractBuild build) {
+        AbstractProject<?, ?> project = build.getProject();
         BearychatNotifier.BearychatJobProperty jobProperty = project.getProperty(BearychatNotifier.BearychatJobProperty.class);
-        Result result = r.getResult();
+        Result result = build.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousBuild();
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
         if ((result == Result.ABORTED && jobProperty.getNotifyAborted())
@@ -130,7 +149,14 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 || (result == Result.SUCCESS && previousResult == Result.FAILURE && jobProperty.getNotifyBackToNormal())
                 || (result == Result.SUCCESS && jobProperty.getNotifySuccess())
                 || (result == Result.UNSTABLE && jobProperty.getNotifyUnstable())) {
-            getBearychat(r).publish(getBuildStatusMessage(r), getContent("complete", r), getBuildColor(r));
+
+        String action = "complete";
+        String message = getBuildStatusMessage(build);
+        String color = getBuildColor(build);
+        Map<String, Object> dataMap = getData(build);
+        dataMap.put("message", message);
+        dataMap.put("color", color);
+            getBearychat(build).publish(action, dataMap);
         }
     }
 
