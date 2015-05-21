@@ -3,5 +3,5 @@
   Since we don't really have anything dynamic here, let's just use static HTML. 
 -->
 <div>
-  This plugin is a Bearychat notifier that can publish build status to Bearychat channels.
+  This plugin is a BearyChat notifier that can publish build status to BearyChat channels.
 </div>

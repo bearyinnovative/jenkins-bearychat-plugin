@@ -1,111 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <!-- change to this parent to compare building this plugin for Hudson -->
-	<!--
-    <parent>
-		<groupId>org.jvnet.hudson.plugins</groupId>
-		<artifactId>hudson-plugin-parent</artifactId>
-		<version>2.0.0</version>
-	</parent>
-	-->
+  <!-- change to this parent to compare building this plugin for hudson -->
+  <parent>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>plugin</artifactId>
+    <version>1.580</version>
+  </parent>
 
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>1.447</version>
-    </parent>
+  <artifactId>bearychat</artifactId>
+  <packaging>hpi</packaging>
+  <version>1.5-SNAPSHOT</version>
+  <name>BearyChat Plugin</name>
+  <description>A Build status publisher that notifies channels on a BearyChat team</description>
+  <url>http://wiki.jenkins-ci.org/display/JENKINS/BearyChat+Plugin</url>
 
-	<artifactId>bearychat</artifactId>
-	<packaging>hpi</packaging>
-	<version>1.7-SNAPSHOT</version>
-	<name>Bearychat Notification Plugin</name>
-	<description>A Build status publisher that notifies channels on a Bearychat team</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Bearychat+Plugin</url>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
+  <licenses>
+    <license>
+      <name>MIT license</name>
+      <comments>All source code is under the MIT license.</comments>
+    </license>
+  </licenses>
 
-    <licenses>
-		<license>
-			<name>MIT license</name>
-			<comments>All source code is under the MIT license.</comments>
-		</license>
-	</licenses>
+  <scm>
+    <connection>scm:git:ssh://git@github.com/jenkinsci/bearychat-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/jenkinsci/bearychat-plugin.git</developerConnection>
+    <url>https://github.com/jenkinsci/bearychat-plugin</url>
+    <tag>HEAD</tag>
+  </scm>
 
-    <scm>
-        <connection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/bearyinnovative/jenkins-bearychat-plugin.git</developerConnection>
-        <url>https://github.com/bearyinnovative/jenkins-bearychat-plugin</url>
-    </scm>
+  <dependencies>
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20090211</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- only here to prevent from being included inside hpi for hudson parent, not needed by project at all -->
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>1.2.16</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- only here to prevent from being included inside hpi for hudson parent, not needed by project at all -->
+    <dependency>
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
-	<dependencies>
-		<dependency>
-			<groupId>commons-httpclient</groupId>
-			<artifactId>commons-httpclient</artifactId>
-			<version>3.1</version>
-		</dependency>
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>20131018</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
-        </dependency>
-        <!-- only here to prevent from being included inside hpi for hudson parent, not needed by project at all -->
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>1.2.9</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- only here to prevent from being included inside hpi for hudson parent, not needed by project at all -->
-        <dependency>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <version>1.0.4</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
+  <build>
     <plugins>
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
         <configuration>
-          <goals>deploy</goals>
+        <goals>deploy</goals>
         </configuration>
       </plugin>
     </plugins>
   </build>
 
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
+  <developers>
+    <developer>
+      <id>yuanbohan</id>
+      <name>Yuanbo Han</name>
+      <email>yuanbo.han@bearyinnovative.com</email>
+  </developer>
+  </developers>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <developers>
-        <developer>
-          <id>grantmd</id>
-          <name>Myles Grant</name>
-          <email>myles@tinyspeck.com</email>
-        </developer>
-    </developers>
+  <distributionManagement>
+    <repository>
+      <id>maven.jenkins-ci.org</id>
+      <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+    </repository>
+  </distributionManagement>
 
 </project>

@@ -5,13 +5,18 @@ import hudson.model.*;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
+
 import org.apache.commons.lang.StringUtils;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+
+import jenkins.model.JenkinsLocationConfiguration;
 
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
@@ -34,6 +39,78 @@ public class ActiveNotifier implements FineGrainedNotifier {
     public void deleted(AbstractBuild r) {
     }
 
+    public Map<String, Object> getData(AbstractBuild build){
+        JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
+        String configUrl = globalConfig.getUrl();
+        String configName = globalConfig.getDisplayName();
+
+        Map<String, String> configMap = new HashMap<String, String>();
+        configMap.put("config_url", configUrl);
+        configMap.put("config_Name", configName);
+
+
+        AbstractProject<?, ?> project = build.getProject();
+        String projectName = project.getName();
+        String projectAbsoluteUrl = project.getAbsoluteUrl();
+        String projectFullName = project.getFullName();
+        String projectDisplayName = project.getFullDisplayName();
+
+        Map<String, String> projectMap = new HashMap<String, String>();
+        projectMap.put("name", projectName);
+        projectMap.put("full_name", projectFullName);
+        projectMap.put("display_name", projectDisplayName);
+        projectMap.put("absolute_url", projectAbsoluteUrl);
+
+
+
+        String id = build.getId();
+        int number = build.getNumber();
+        String jobFullName = build.getFullDisplayName();
+        String jobDisplayName = build.getDisplayName();
+        String duration = build.getDurationString();
+        String status = MessageBuilder.getStatusMessage(build);
+
+        Map<String, String> jobMap = new HashMap<String, String>();
+        jobMap.put("id", id);
+        jobMap.put("number", number+"");
+        jobMap.put("full_name", jobFullName);
+        jobMap.put("display_name", jobDisplayName);
+        jobMap.put("status", status);
+        jobMap.put("duration", duration);
+
+
+
+        ChangeLogSet changeSet = build.getChangeSet();
+        List<Entry> entries = new LinkedList<Entry>();
+        Set<AffectedFile> files = new HashSet<AffectedFile>();
+        for (Object o : changeSet.getItems()) {
+            Entry entry = (Entry) o;
+            entries.add(entry);
+            files.addAll(entry.getAffectedFiles());
+        }
+
+
+        String nonsense= "remotenonsense";
+        Set<String> authors = new HashSet<String>();
+        for (Entry entry : entries) {
+            String displayName = entry.getAuthor().getDisplayName();
+            if(!"".equals(nonsense)){
+                authors.add(displayName);
+            }
+        }
+
+        Map<String, Object> result = new HashMap<String, Object>();
+
+        result.put("files", files.size() + "");
+        result.put("authors", StringUtils.join(authors, ", "));
+
+        result.put("project", projectMap);
+        result.put("job", jobMap);
+        result.put("config", configMap);
+
+        return result;
+    }
+
     public void started(AbstractBuild build) {
         String changes = getChanges(build);
         CauseAction cause = build.getAction(CauseAction.class);
@@ -50,16 +127,20 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     private void notifyStart(AbstractBuild build, String message) {
-        getBearychat(build).publish(message, "good");
+    String action = "start";
+    Map<String, Object> dataMap = getData(build);
+    dataMap.put("message", message);
+    dataMap.put("color", "good");
+        getBearychat(build).publish(action, dataMap);
     }
 
     public void finalized(AbstractBuild r) {
     }
 
-    public void completed(AbstractBuild r) {
-        AbstractProject<?, ?> project = r.getProject();
+    public void completed(AbstractBuild build) {
+        AbstractProject<?, ?> project = build.getProject();
         BearychatNotifier.BearychatJobProperty jobProperty = project.getProperty(BearychatNotifier.BearychatJobProperty.class);
-        Result result = r.getResult();
+        Result result = build.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousBuild();
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
         if ((result == Result.ABORTED && jobProperty.getNotifyAborted())
@@ -68,11 +149,18 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 || (result == Result.SUCCESS && previousResult == Result.FAILURE && jobProperty.getNotifyBackToNormal())
                 || (result == Result.SUCCESS && jobProperty.getNotifySuccess())
                 || (result == Result.UNSTABLE && jobProperty.getNotifyUnstable())) {
-            getBearychat(r).publish(getBuildStatusMessage(r), getBuildColor(r));
+
+        String action = "complete";
+        String message = getBuildStatusMessage(build);
+        String color = getBuildColor(build);
+        Map<String, Object> dataMap = getData(build);
+        dataMap.put("message", message);
+        dataMap.put("color", color);
+            getBearychat(build).publish(action, dataMap);
         }
     }
 
-    String getChanges(AbstractBuild r) {
+    public String getChanges(AbstractBuild r) {
         if (!r.hasChangeSetComputed()) {
             logger.info("No change set computed...");
             return null;

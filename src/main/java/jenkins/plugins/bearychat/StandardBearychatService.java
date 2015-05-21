@@ -3,15 +3,16 @@ package jenkins.plugins.bearychat;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
-
 import org.json.JSONObject;
-import org.json.JSONArray;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import hudson.ProxyConfiguration;
+
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 
@@ -37,35 +38,69 @@ public class StandardBearychatService implements BearychatService {
     }
 
     public void publish(String message, String color) {
+        Map<String, Object> dataMap = new HashMap<String, Object>();
+        dataMap.put("message", message);
+        dataMap.put("color", color);
+        publish("unknown", dataMap);
+    }
+
+    @Override
+    public void publish(String action, Map<String, Object> dataMap) {
         for (String roomId : roomIds) {
             String url = "https://" + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
-            logger.info("Posting: to " + roomId + " on " + teamDomain + " using " + url +": " + message + " " + color);
+            logger.info("Posting: to " + roomId + " on " + teamDomain + " using " + url +": " + dataMap);
             HttpClient client = getHttpClient();
             PostMethod post = new PostMethod(url);
             JSONObject json = new JSONObject();
 
             try {
-                //JSONObject field = new JSONObject();
-                //field.put("short", false);
-                //field.put("value", message);
 
-                //JSONArray fields = new JSONArray();
-                //fields.put(field);
+                JSONObject dataJson = new JSONObject();
 
-                //JSONObject attachment = new JSONObject();
+                String message = "", color = "";
+                if(dataMap != null && !dataMap.isEmpty()){
+                    message = (String)dataMap.get("message");
+                    color = (String)dataMap.get("color");
 
-                // TODO: 暂时不需要color
-                // 也不需要attachment
-                //attachment.put("color", color);
-                //attachment.put("fields", fields);
-                //JSONArray attachments = new JSONArray();
+                    dataJson.put("authors", dataMap.get("authors"));
+                    dataJson.put("files", dataMap.get("files"));
 
-                //attachments.put(attachment);
+                    Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
+                    JSONObject configJson = new JSONObject();
+                    for(String key : configMap.keySet()){
+                        Object val = configMap.get(key);
+                        configJson.put(key, val);
+                    }
+                    dataJson.put("config", configJson);
+
+                    Map<String,String> projectMap = (Map<String,String>)dataMap.get("project");
+                    JSONObject projectJson = new JSONObject();
+                    for(String key : projectMap.keySet()){
+                        Object val = projectMap.get(key);
+                        projectJson.put(key, val);
+                    }
+                    dataJson.put("project", projectJson);
+
+                    Map<String,String> jobMap = (Map<String,String>)dataMap.get("job");
+                    JSONObject jobJson = new JSONObject();
+                    for(String key : jobMap.keySet()){
+                        Object val = jobMap.get(key);
+                        jobJson.put(key, val);
+                    }
+                    dataJson.put("job", jobJson);
+                }
+                String data = dataJson.toString();
+
+
+                json.put("action", action);
                 json.put("channel", roomId);
                 json.put("text", message);
-                //json.put("attachments", attachments);
+                json.put("color", color);
+                json.put("data", data);
+
                 post.addParameter("payload", json.toString());
                 post.getParams().setContentCharset("UTF-8");
+
                 int responseCode = client.executeMethod(post);
                 String response = post.getResponseBodyAsString();
                 if(responseCode != HttpStatus.SC_OK) {
@@ -79,7 +114,7 @@ public class StandardBearychatService implements BearychatService {
             }
         }
     }
-    
+
     private HttpClient getHttpClient() {
         HttpClient client = new HttpClient();
         if (Jenkins.getInstance() != null) {
@@ -105,4 +140,5 @@ public class StandardBearychatService implements BearychatService {
     void setHost(String host) {
         this.host = host;
     }
+
 }

@@ -11,7 +11,7 @@
     tags they use. Views are always organized according to its owner class,
     so it should be straightforward to find them.
   -->
-<f:section title="Global Bearychat Notifier Settings" name="bearychat">
+<f:section title="Global BearyChat Notifier Settings" name="bearychat">
     <f:entry title="Team Domain" help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatTeamDomain.html">
         <f:textbox name="bearychatTeamDomain" value="${descriptor.getTeamDomain()}" />
     </f:entry>
