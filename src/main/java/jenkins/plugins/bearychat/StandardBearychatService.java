@@ -19,73 +19,106 @@ public class StandardBearychatService implements BearychatService {
 
     private static final Logger logger = Logger.getLogger(StandardBearychatService.class.getName());
 
+    private String scheme = "https://";
     private String host = "bearychat.com";
     private String teamDomain;
     private String token;
-    private String[] roomIds;
+    private String room;
 
-    public StandardBearychatService(String teamDomain, String token, String roomId) {
+    public StandardBearychatService(String teamDomain, String token, String room) {
         super();
         this.teamDomain = teamDomain;
         this.token = token;
-        this.roomIds = roomId.split("[,; ]+");
+        this.room = room;
     }
 
     public boolean publish(String message) {
-        return publish(message, "warning");
+        return publish(message, "green");
     }
 
     public boolean publish(String message, String color) {
+        Map<String, Object> dataMap = new HashMap<String, Object>();
+        dataMap.put("message", message);
+        dataMap.put("color", color);
+        publish("unknown", dataMap);
+    }
+
+    public boolean publish(String action, Map<String, Object> dataMap) {
         boolean result = true;
-        for (String roomId : roomIds) {
-            String url = "https://" + teamDomain + "." + host + "/services/hooks/jenkins-ci?token=" + token;
-            logger.info("Posting: to " + roomId + " on " + teamDomain + " using " + url +": " + message + " " + color);
-            HttpClient client = getHttpClient();
-            PostMethod post = new PostMethod(url);
-            JSONObject json = new JSONObject();
+        String url = genPostUrl();
+        logger.info("Posting: to " + room + " on " + teamDomain + " using " + url +": " + dataMap);
+        HttpClient client = getHttpClient();
+        PostMethod post = new PostMethod(url);
+        JSONObject json = new JSONObject();
 
-            try {
-                JSONObject field = new JSONObject();
-                field.put("short", false);
-                field.put("value", message);
+        try {
 
-                JSONArray fields = new JSONArray();
-                fields.put(field);
+            JSONObject dataJson = new JSONObject();
 
-                JSONObject attachment = new JSONObject();
-                attachment.put("fallback", message);
-                attachment.put("color", color);
-                attachment.put("fields", fields);
-                JSONArray mrkdwn = new JSONArray();
-                mrkdwn.put("pretext");
-                mrkdwn.put("text");
-                mrkdwn.put("fields");
-                attachment.put("mrkdwn_in", mrkdwn);
-                JSONArray attachments = new JSONArray();
-                attachments.put(attachment);
+            String message = "", color = "";
+            if(dataMap != null && !dataMap.isEmpty()){
+                message = (String)dataMap.get("message");
+                color = (String)dataMap.get("color");
 
-                json.put("channel", roomId);
-                json.put("attachments", attachments);
+                dataJson.put("authors", dataMap.get("authors"));
+                dataJson.put("files", dataMap.get("files"));
 
-                post.addParameter("payload", json.toString());
-                post.getParams().setContentCharset("UTF-8");
-                int responseCode = client.executeMethod(post);
-                String response = post.getResponseBodyAsString();
-                if(responseCode != HttpStatus.SC_OK) {
-                    logger.log(Level.WARNING, "BearyChat post may have failed. Response: " + response);
-                    result = false;
+                Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
+                JSONObject configJson = new JSONObject();
+                for(String key : configMap.keySet()){
+                    Object val = configMap.get(key);
+                    configJson.put(key, val);
                 }
-                else {
-                    logger.info("Posting succeeded");
+                dataJson.put("config", configJson);
+
+                Map<String,String> projectMap = (Map<String,String>)dataMap.get("project");
+                JSONObject projectJson = new JSONObject();
+                for(String key : projectMap.keySet()){
+                    Object val = projectMap.get(key);
+                    projectJson.put(key, val);
                 }
-            } catch (Exception e) {
-                logger.log(Level.WARNING, "Error posting to BearyChat", e);
-                result = false;
-            } finally {
-                post.releaseConnection();
+                dataJson.put("project", projectJson);
+
+                Map<String,String> jobMap = (Map<String,String>)dataMap.get("job");
+                JSONObject jobJson = new JSONObject();
+                for(String key : jobMap.keySet()){
+                    Object val = jobMap.get(key);
+                    jobJson.put(key, val);
+                }
+                dataJson.put("job", jobJson);
             }
+            String data = dataJson.toString();
+
+
+            json.put("action", action);
+            json.put("channel", room);
+            json.put("text", message);
+            json.put("color", color);
+            json.put("data", data);
+
+            post.addParameter("payload", json.toString());
+            post.getParams().setContentCharset("UTF-8");
+
+            int responseCode = client.executeMethod(post);
+            String response = post.getResponseBodyAsString();
+            if(responseCode != HttpStatus.SC_OK) {
+                logger.log(Level.WARNING, "BearyChat post may have failed. Response: " + response);
+                result = false;
+            } else {
+                logger.info("Posting succeeded");
+            }
+
+        } catch (Exception e) {
+            result = false;
+            logger.log(Level.WARNING, "Error posting to BearyChat", e);
+        } finally {
+            post.releaseConnection();
         }
         return result;
+    }
+
+    public string genPostUrl(){
+        String url = scheme + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
     }
 
     protected HttpClient getHttpClient() {

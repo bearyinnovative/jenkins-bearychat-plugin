@@ -4,6 +4,7 @@ import hudson.EnvVars;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.BallColor;
 import hudson.model.BuildListener;
 import hudson.model.Cause;
 import hudson.model.CauseAction;
@@ -46,74 +47,92 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return notifier.newBearychatService(r, listener);
     }
 
-    public void deleted(AbstractBuild r) {
-    }
+    public Map<String, Object> getData(AbstractBuild build){
+        JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
+        String configUrl = notifier.getBuildServerUrl();
 
-    public void started(AbstractBuild build) {
+        Map<String, String> configMap = new HashMap<String, String>();
+        configMap.put("config_url", configUrl);
+
 
         AbstractProject<?, ?> project = build.getProject();
+        String projectName = project.getName();
+        String projectAbsoluteUrl = project.getAbsoluteUrl();
+        String projectFullName = project.getFullName();
+        String projectDisplayName = project.getFullDisplayName();
 
-        CauseAction causeAction = build.getAction(CauseAction.class);
+        Map<String, String> projectMap = new HashMap<String, String>();
+        projectMap.put("name", projectName);
+        projectMap.put("full_name", projectFullName);
+        projectMap.put("display_name", projectDisplayName);
+        projectMap.put("absolute_url", projectAbsoluteUrl);
 
-        if (causeAction != null) {
-            Cause scmCause = causeAction.findCause(SCMTrigger.SCMTriggerCause.class);
-            if (scmCause == null) {
-                MessageBuilder message = new MessageBuilder(notifier, build);
-                message.append(causeAction.getShortDescription());
-                notifyStart(build, message.appendOpenLink().toString());
-                // Cause was found, exit early to prevent double-message
-                return;
+
+
+        String id = build.getId();
+        int number = build.getNumber();
+        String jobFullName = build.getFullDisplayName();
+        String jobDisplayName = build.getDisplayName();
+        String duration = build.getDurationString();
+        String status = MessageBuilder.getStatusMessage(build);
+        String customMessage = getCustomMessage();
+        String commitMessage = getCommitMessage();
+
+        Map<String, String> jobMap = new HashMap<String, String>();
+        jobMap.put("id", id);
+        jobMap.put("number", number+"");
+        jobMap.put("full_name", jobFullName);
+        jobMap.put("display_name", jobDisplayName);
+        jobMap.put("status", status);
+        jobMap.put("duration", duration);
+        jobMap.put("custom_message", customMessage);
+        jobMap.put("commit_message", commitMessage);
+
+
+
+        ChangeLogSet changeSet = build.getChangeSet();
+        List<Entry> entries = new LinkedList<Entry>();
+        Set<AffectedFile> files = new HashSet<AffectedFile>();
+        for (Object o : changeSet.getItems()) {
+            Entry entry = (Entry) o;
+            entries.add(entry);
+            files.addAll(entry.getAffectedFiles());
+        }
+
+
+        String nonsense= "remotenonsense";
+        Set<String> authors = new HashSet<String>();
+        for (Entry entry : entries) {
+            String displayName = entry.getAuthor().getDisplayName();
+            if(!"".equals(nonsense)){
+                authors.add(displayName);
             }
         }
 
-        String changes = getChanges(build, notifier.includeCustomMessage());
-        if (changes != null) {
-            notifyStart(build, changes);
-        } else {
-            notifyStart(build, getBuildStatusMessage(build, false, notifier.includeCustomMessage()));
-        }
+        Map<String, Object> result = new HashMap<String, Object>();
+
+        result.put("files", files.size() + "");
+        result.put("authors", StringUtils.join(authors, ", "));
+
+        result.put("project", projectMap);
+        result.put("job", jobMap);
+        result.put("config", configMap);
+
+        return result;
     }
 
-    private void notifyStart(AbstractBuild build, String message) {
-        AbstractProject<?, ?> project = build.getProject();
-        AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
-        if (previousBuild == null) {
-            getBearychat(build).publish(message, "good");
-        } else {
-            getBearychat(build).publish(message, getBuildColor(previousBuild));
-        }
-    }
-
-    public void finalized(AbstractBuild r) {
-    }
-
-    public void completed(AbstractBuild r) {
-        AbstractProject<?, ?> project = r.getProject();
-        Result result = r.getResult();
-        AbstractBuild<?, ?> previousBuild = project.getLastBuild();
-        do {
-            previousBuild = previousBuild.getPreviousCompletedBuild();
-        } while (previousBuild != null && previousBuild.getResult() == Result.ABORTED);
-        Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
-        if ((result == Result.ABORTED && notifier.getNotifyAborted())
-                || (result == Result.FAILURE //notify only on single failed build
-                    && previousResult != Result.FAILURE
-                    && notifier.getNotifyFailure())
-                || (result == Result.FAILURE //notify only on repeated failures
-                    && previousResult == Result.FAILURE
-                    && notifier.getNotifyRepeatedFailure())
-                || (result == Result.NOT_BUILT && notifier.getNotifyNotBuilt())
-                || (result == Result.SUCCESS
-                    && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
-                    && notifier.getNotifyBackToNormal())
-                || (result == Result.SUCCESS && notifier.getNotifySuccess())
-                || (result == Result.UNSTABLE && notifier.getNotifyUnstable())) {
-            getBearychat(r).publish(getBuildStatusMessage(r, notifier.includeTestSummary(),
-                    notifier.includeCustomMessage()), getBuildColor(r));
-            if (notifier.getCommitInfoChoice().showAnything()) {
-                getBearychat(r).publish(getCommitList(r), getBuildColor(r));
-            }
-        }
+    public String getCustomMessage(){
+         String customMessage = notifier.getCustomMessage();
+         EnvVars envVars = new EnvVars();
+         try {
+             envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
+             customMessage = envVars.expand(customMessage);
+         } catch (IOException e) {
+             logger.log(SEVERE, e.getMessage(), e);
+         } catch (InterruptedException e) {
+             logger.log(SEVERE, e.getMessage(), e);
+         }
+         return customMessage;
     }
 
     String getChanges(AbstractBuild r, boolean includeCustomMessage) {
@@ -144,14 +163,11 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.append(" (");
         message.append(files.size());
         message.append(" file(s) changed)");
-        message.appendOpenLink();
-        if (includeCustomMessage) {
-            message.appendCustomMessage();
-        }
+
         return message.toString();
     }
 
-    String getCommitList(AbstractBuild r) {
+    String getCommitMessage(AbstractBuild r) {
         ChangeLogSet changeSet = r.getChangeSet();
         List<Entry> entries = new LinkedList<Entry>();
         for (Object o : changeSet.getItems()) {
@@ -159,60 +175,129 @@ public class ActiveNotifier implements FineGrainedNotifier {
             logger.info("Entry " + o);
             entries.add(entry);
         }
+
         if (entries.isEmpty()) {
             logger.info("Empty change...");
             Cause.UpstreamCause c = (Cause.UpstreamCause)r.getCause(Cause.UpstreamCause.class);
             if (c == null) {
-                return "No Changes.";
+                return "No Commit Changes.";
             }
             String upProjectName = c.getUpstreamProject();
             int buildNumber = c.getUpstreamBuild();
             AbstractProject project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
             AbstractBuild upBuild = (AbstractBuild)project.getBuildByNumber(buildNumber);
-            return getCommitList(upBuild);
+            return getCommitMessage(upBuild);
         }
-        Set<String> commits = new HashSet<String>();
-        for (Entry entry : entries) {
+
+        StringBuffer commits = new StringBuilder();
+        for (int i=0; i < 5 && i<entries.size(); i++) {
+            Entry entry = entries.get(i);
             StringBuffer commit = new StringBuffer();
-            CommitInfoChoice commitInfoChoice = notifier.getCommitInfoChoice();
-            if (commitInfoChoice.showTitle()) {
-                commit.append(entry.getMsg());
-            }
-            if (commitInfoChoice.showAuthor()) {
-                commit.append(" [").append(entry.getAuthor().getDisplayName()).append("]");
-            }
-            commits.add(commit.toString());
+            commit.append(entry.getMsg());
+            commit.append(" [").append(entry.getAuthor().getDisplayName()).append("]");
+            commits.append("- ").append(commit.toString()).append("\n");
         }
-        MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("Changes:\n- ");
-        message.append(StringUtils.join(commits, "\n- "));
-        return message.toString();
+        if(commits.size() > 5){
+            int left = commits.size() - 5;
+            commits.append(left).append(" more...");
+        }
+
+        return commits.toString();
     }
 
     static String getBuildColor(AbstractBuild r) {
         Result result = r.getResult();
+        String color = null;
         if (result == Result.SUCCESS) {
-            return "good";
+            color = "blue";
         } else if (result == Result.FAILURE) {
-            return "danger";
-        } else {
-            return "warning";
+            color = "red";
+        } else if (result == Result.UNSTABLE) {
+            coor = "yellow";
+        } else{
+            color = "grey";
         }
+        return color;
     }
 
-    String getBuildStatusMessage(AbstractBuild r, boolean includeTestSummary, boolean includeCustomMessage) {
+    String getBuildStatusMessage(AbstractBuild r, boolean includeCustomMessage) {
         MessageBuilder message = new MessageBuilder(notifier, r);
         message.appendStatusMessage();
         message.appendDuration();
         message.appendOpenLink();
-        if (includeTestSummary) {
-            message.appendTestSummary();
-        }
+
         if (includeCustomMessage) {
             message.appendCustomMessage();
         }
         return message.toString();
     }
+
+    // <<<< ========== events to notify ==========
+    public void deleted(AbstractBuild r) {
+
+    }
+
+    /**
+     * start after failure is still RED color
+     */
+    public void started(AbstractBuild build) {
+        String message = getChanges(build);
+
+        if (message == null || "".equals(message)) {
+            message = getBuildStatusMessage(build);
+        }
+
+        String action = "start";
+
+        String color = "green";
+        Run previousBuild = build.getProject().getLastBuild().getPreviousBuild();
+        Result lastResult = previousBuild.getResult();
+        if(lastResult != null && lastResult == Reuslt.FAILURE){
+            color = "red";
+        }
+
+        Map<String, Object> dataMap = getData(build);
+        dataMap.put("message", message);
+        dataMap.put("color", color);
+        getBearychat(build).publish(action, dataMap);
+    }
+
+    public void finalized(AbstractBuild r) {
+    }
+
+    public void completed(AbstractBuild r) {
+        AbstractProject<?, ?> project = r.getProject();
+        Result result = r.getResult();
+        AbstractBuild<?, ?> previousBuild = project.getLastBuild();
+        do {
+            previousBuild = previousBuild.getPreviousCompletedBuild();
+        } while (previousBuild != null && previousBuild.getResult() == Result.ABORTED);
+        Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
+
+        if ((result == Result.ABORTED && notifier.getNotifyAborted())
+                || (result == Result.FAILURE //notify only on single failed build
+                    && previousResult != Result.FAILURE
+                    && notifier.getNotifyFailure())
+                || (result == Result.FAILURE //notify only on repeated failures
+                    && previousResult == Result.FAILURE
+                    && notifier.getNotifyRepeatedFailure())
+                || (result == Result.NOT_BUILT && notifier.getNotifyNotBuilt())
+                || (result == Result.SUCCESS
+                    && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
+                    && notifier.getNotifyBackToNormal())
+                || (result == Result.SUCCESS && notifier.getNotifySuccess())
+                || (result == Result.UNSTABLE && notifier.getNotifyUnstable())) {
+
+            String action = "complete";
+            String message = getBuildStatusMessage(build);
+            String color = getBuildColor(build);
+            Map<String, Object> dataMap = getData(build);
+            dataMap.put("message", message);
+            dataMap.put("color", color);
+            getBearychat(build).publish(action, dataMap);
+        }
+    }
+    // ========== events to notify ========== >>>>
 
     public static class MessageBuilder {
 
@@ -323,7 +408,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         public MessageBuilder appendOpenLink() {
             String url = notifier.getBuildServerUrl() + build.getUrl();
-            message.append(" (<").append(url).append("|Open>)");
+            message.append(" ").append(url);
             return this;
         }
 
@@ -336,23 +421,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 durationString = build.getDurationString();
             }
             message.append(durationString);
-            return this;
-        }
-
-        public MessageBuilder appendTestSummary() {
-            AbstractTestResultAction<?> action = this.build
-                    .getAction(AbstractTestResultAction.class);
-            if (action != null) {
-                int total = action.getTotalCount();
-                int failed = action.getFailCount();
-                int skipped = action.getSkipCount();
-                message.append("\nTest Status:\n");
-                message.append("\tPassed: " + (total - failed - skipped));
-                message.append(", Failed: " + failed);
-                message.append(", Skipped: " + skipped);
-            } else {
-                message.append("\nNo Tests found.");
-            }
             return this;
         }
 

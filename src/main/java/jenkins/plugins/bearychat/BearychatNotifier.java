@@ -40,8 +40,6 @@ public class BearychatNotifier extends Notifier {
     private boolean notifyFailure;
     private boolean notifyBackToNormal;
     private boolean notifyRepeatedFailure;
-    private boolean includeTestSummary;
-    private CommitInfoChoice commitInfoChoice;
     private boolean includeCustomMessage;
     private String customMessage;
 
@@ -66,8 +64,7 @@ public class BearychatNotifier extends Notifier {
         if(buildServerUrl == null || buildServerUrl == "") {
             JenkinsLocationConfiguration jenkinsConfig = new JenkinsLocationConfiguration();
             return jenkinsConfig.getUrl();
-        }
-        else {
+        } else {
             return buildServerUrl;
         }
     }
@@ -82,10 +79,6 @@ public class BearychatNotifier extends Notifier {
 
     public boolean getNotifySuccess() {
         return notifySuccess;
-    }
-
-    public CommitInfoChoice getCommitInfoChoice() {
-        return commitInfoChoice;
     }
 
     public boolean getNotifyAborted() {
@@ -108,14 +101,6 @@ public class BearychatNotifier extends Notifier {
         return notifyBackToNormal;
     }
 
-    public boolean includeTestSummary() {
-        return includeTestSummary;
-    }
-
-    public boolean getNotifyRepeatedFailure() {
-        return notifyRepeatedFailure;
-    }
-
     public boolean includeCustomMessage() {
         return includeCustomMessage;
     }
@@ -128,7 +113,6 @@ public class BearychatNotifier extends Notifier {
     public BearychatNotifier(final String teamDomain, final String authToken, final String room, final String buildServerUrl,
                              final String sendAs, final boolean startNotification, final boolean notifyAborted, final boolean notifyFailure,
                              final boolean notifyNotBuilt, final boolean notifySuccess, final boolean notifyUnstable, final boolean notifyBackToNormal,
-                             final boolean notifyRepeatedFailure, final boolean includeTestSummary, CommitInfoChoice commitInfoChoice,
                              boolean includeCustomMessage, String customMessage) {
         super();
         this.teamDomain = teamDomain;
@@ -143,9 +127,6 @@ public class BearychatNotifier extends Notifier {
         this.notifySuccess = notifySuccess;
         this.notifyUnstable = notifyUnstable;
         this.notifyBackToNormal = notifyBackToNormal;
-        this.notifyRepeatedFailure = notifyRepeatedFailure;
-        this.includeTestSummary = includeTestSummary;
-        this.commitInfoChoice = commitInfoChoice;
         this.includeCustomMessage = includeCustomMessage;
         this.customMessage = customMessage;
     }
@@ -210,8 +191,6 @@ public class BearychatNotifier extends Notifier {
         private String buildServerUrl;
         private String sendAs;
 
-        public static final CommitInfoChoice[] COMMIT_INFO_CHOICES = CommitInfoChoice.values();
-
         public DescriptorImpl() {
             load();
         }
@@ -258,14 +237,10 @@ public class BearychatNotifier extends Notifier {
             boolean notifyUnstable = "true".equals(sr.getParameter("bearychatNotifyUnstable"));
             boolean notifyFailure = "true".equals(sr.getParameter("bearychatNotifyFailure"));
             boolean notifyBackToNormal = "true".equals(sr.getParameter("bearychatNotifyBackToNormal"));
-            boolean notifyRepeatedFailure = "true".equals(sr.getParameter("bearychatNotifyRepeatedFailure"));
-            boolean includeTestSummary = "true".equals(sr.getParameter("includeTestSummary"));
-            CommitInfoChoice commitInfoChoice = CommitInfoChoice.forDisplayName(sr.getParameter("bearychatCommitInfoChoice"));
             boolean includeCustomMessage = "on".equals(sr.getParameter("includeCustomMessage"));
             String customMessage = sr.getParameter("customMessage");
             return new BearychatNotifier(teamDomain, token, room, buildServerUrl, sendAs, startNotification, notifyAborted,
-                    notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal, notifyRepeatedFailure,
-                    includeTestSummary, commitInfoChoice, includeCustomMessage, customMessage);
+                    notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal, includeCustomMessage, customMessage);
         }
 
         @Override
@@ -317,8 +292,8 @@ public class BearychatNotifier extends Notifier {
                     targetBuildServerUrl = this.buildServerUrl;
                 }
                 BearychatService testBearychatService = getBearychatService(targetDomain, targetToken, targetRoom);
-                String message = "Bearychat/Jenkins plugin: you're all set on " + targetBuildServerUrl;
-                boolean success = testBearychatService.publish(message, "good");
+                String message = "BearyChat Jenkins Plugin has been configured correctly. " + targetBuildServerUrl;
+                boolean success = testBearychatService.publish(message);
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());
