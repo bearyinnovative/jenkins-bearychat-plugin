@@ -11,7 +11,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void publishWithBadHostShouldNotRethrowExceptions() {
-        StandardBearychatService service = new StandardBearychatService("foo", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("foo", "token", "general");
         service.setHost("hostvaluethatwillcausepublishtofail");
         service.publish("message");
     }
@@ -21,7 +21,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void invalidTeamDomainShouldFail() {
-        StandardBearychatService service = new StandardBearychatService("my", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("my", "token", "general");
         service.publish("message");
     }
 
@@ -30,7 +30,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void invalidTokenShouldFail() {
-        StandardBearychatService service = new StandardBearychatService("beary", "token", "#general");
+        StandardBearychatService service = new StandardBearychatService("beary", "token", "general");
         service.publish("message");
     }
 }

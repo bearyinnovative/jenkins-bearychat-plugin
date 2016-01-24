@@ -3,6 +3,7 @@ package jenkins.plugins.bearychat;
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
@@ -23,7 +24,7 @@ public class BearychatListener extends RunListener<AbstractBuild> {
 
     @Override
     public void onCompleted(AbstractBuild r, TaskListener listener) {
-        getNotifier(r.getProject()).completed(r);
+        getNotifier(r.getProject(), listener).completed(r);
         super.onCompleted(r, listener);
     }
 
@@ -46,11 +47,11 @@ public class BearychatListener extends RunListener<AbstractBuild> {
     }
 
     @SuppressWarnings("unchecked")
-    FineGrainedNotifier getNotifier(AbstractProject project) {
+    FineGrainedNotifier getNotifier(AbstractProject project, TaskListener listener) {
         Map<Descriptor<Publisher>, Publisher> map = project.getPublishersList().toMap();
         for (Publisher publisher : map.values()) {
             if (publisher instanceof BearychatNotifier) {
-                return new ActiveNotifier((BearychatNotifier) publisher);
+                return new ActiveNotifier((BearychatNotifier) publisher, (BuildListener)listener);
             }
         }
         return new DisabledNotifier();

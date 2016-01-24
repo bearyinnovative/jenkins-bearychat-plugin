@@ -1,166 +1,122 @@
 package jenkins.plugins.bearychat;
 
+import hudson.EnvVars;
 import hudson.Util;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.Cause;
+import hudson.model.CauseAction;
+import hudson.model.Hudson;
+import hudson.model.Result;
+import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
-
+import hudson.tasks.test.AbstractTestResultAction;
+import hudson.triggers.SCMTrigger;
+import hudson.util.LogTaskListener;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import jenkins.model.JenkinsLocationConfiguration;
+import static java.util.logging.Level.INFO;
+import static java.util.logging.Level.SEVERE;
 
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
 
-    private static final Logger logger = Logger.getLogger(BearychatListener.class.getName());
+    private static final Logger logger = Logger.getLogger(ActiveNotifier.class.getName());
 
     BearychatNotifier notifier;
+    BuildListener listener;
 
-    public ActiveNotifier(BearychatNotifier notifier) {
+    public ActiveNotifier(BearychatNotifier notifier, BuildListener listener) {
         super();
         this.notifier = notifier;
+        this.listener = listener;
     }
 
     private BearychatService getBearychat(AbstractBuild r) {
-        AbstractProject<?, ?> project = r.getProject();
-        String projectRoom = Util.fixEmpty(project.getProperty(BearychatNotifier.BearychatJobProperty.class).getRoom());
-        return notifier.newBearychatService(projectRoom);
+        return notifier.newBearychatService(r, listener);
     }
 
     public void deleted(AbstractBuild r) {
     }
 
-    public Map<String, Object> getData(AbstractBuild build){
-        JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
-        String configUrl = globalConfig.getUrl();
-        String configName = globalConfig.getDisplayName();
-
-        Map<String, String> configMap = new HashMap<String, String>();
-        configMap.put("config_url", configUrl);
-        configMap.put("config_Name", configName);
-
+    public void started(AbstractBuild build) {
 
         AbstractProject<?, ?> project = build.getProject();
-        String projectName = project.getName();
-        String projectAbsoluteUrl = project.getAbsoluteUrl();
-        String projectFullName = project.getFullName();
-        String projectDisplayName = project.getFullDisplayName();
 
-        Map<String, String> projectMap = new HashMap<String, String>();
-        projectMap.put("name", projectName);
-        projectMap.put("full_name", projectFullName);
-        projectMap.put("display_name", projectDisplayName);
-        projectMap.put("absolute_url", projectAbsoluteUrl);
+        CauseAction causeAction = build.getAction(CauseAction.class);
 
-
-
-        String id = build.getId();
-        int number = build.getNumber();
-        String jobFullName = build.getFullDisplayName();
-        String jobDisplayName = build.getDisplayName();
-        String duration = build.getDurationString();
-        String status = MessageBuilder.getStatusMessage(build);
-
-        Map<String, String> jobMap = new HashMap<String, String>();
-        jobMap.put("id", id);
-        jobMap.put("number", number+"");
-        jobMap.put("full_name", jobFullName);
-        jobMap.put("display_name", jobDisplayName);
-        jobMap.put("status", status);
-        jobMap.put("duration", duration);
-
-
-
-        ChangeLogSet changeSet = build.getChangeSet();
-        List<Entry> entries = new LinkedList<Entry>();
-        Set<AffectedFile> files = new HashSet<AffectedFile>();
-        for (Object o : changeSet.getItems()) {
-            Entry entry = (Entry) o;
-            entries.add(entry);
-            files.addAll(entry.getAffectedFiles());
-        }
-
-
-        String nonsense= "remotenonsense";
-        Set<String> authors = new HashSet<String>();
-        for (Entry entry : entries) {
-            String displayName = entry.getAuthor().getDisplayName();
-            if(!"".equals(nonsense)){
-                authors.add(displayName);
+        if (causeAction != null) {
+            Cause scmCause = causeAction.findCause(SCMTrigger.SCMTriggerCause.class);
+            if (scmCause == null) {
+                MessageBuilder message = new MessageBuilder(notifier, build);
+                message.append(causeAction.getShortDescription());
+                notifyStart(build, message.appendOpenLink().toString());
+                // Cause was found, exit early to prevent double-message
+                return;
             }
         }
 
-        Map<String, Object> result = new HashMap<String, Object>();
-
-        result.put("files", files.size() + "");
-        result.put("authors", StringUtils.join(authors, ", "));
-
-        result.put("project", projectMap);
-        result.put("job", jobMap);
-        result.put("config", configMap);
-
-        return result;
-    }
-
-    public void started(AbstractBuild build) {
-        String changes = getChanges(build);
-        CauseAction cause = build.getAction(CauseAction.class);
-
+        String changes = getChanges(build, notifier.includeCustomMessage());
         if (changes != null) {
             notifyStart(build, changes);
-        } else if (cause != null) {
-            MessageBuilder message = new MessageBuilder(notifier, build);
-            message.append(cause.getShortDescription());
-            notifyStart(build, message.appendOpenLink().toString());
         } else {
-            notifyStart(build, getBuildStatusMessage(build));
+            notifyStart(build, getBuildStatusMessage(build, false, notifier.includeCustomMessage()));
         }
     }
 
     private void notifyStart(AbstractBuild build, String message) {
-    String action = "start";
-    Map<String, Object> dataMap = getData(build);
-    dataMap.put("message", message);
-    dataMap.put("color", "good");
-        getBearychat(build).publish(action, dataMap);
+        AbstractProject<?, ?> project = build.getProject();
+        AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
+        if (previousBuild == null) {
+            getBearychat(build).publish(message, "good");
+        } else {
+            getBearychat(build).publish(message, getBuildColor(previousBuild));
+        }
     }
 
     public void finalized(AbstractBuild r) {
     }
 
-    public void completed(AbstractBuild build) {
-        AbstractProject<?, ?> project = build.getProject();
-        BearychatNotifier.BearychatJobProperty jobProperty = project.getProperty(BearychatNotifier.BearychatJobProperty.class);
-        Result result = build.getResult();
-        AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousBuild();
+    public void completed(AbstractBuild r) {
+        AbstractProject<?, ?> project = r.getProject();
+        Result result = r.getResult();
+        AbstractBuild<?, ?> previousBuild = project.getLastBuild();
+        do {
+            previousBuild = previousBuild.getPreviousCompletedBuild();
+        } while (previousBuild != null && previousBuild.getResult() == Result.ABORTED);
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
-        if ((result == Result.ABORTED && jobProperty.getNotifyAborted())
-                || (result == Result.FAILURE && jobProperty.getNotifyFailure())
-                || (result == Result.NOT_BUILT && jobProperty.getNotifyNotBuilt())
-                || (result == Result.SUCCESS && previousResult == Result.FAILURE && jobProperty.getNotifyBackToNormal())
-                || (result == Result.SUCCESS && jobProperty.getNotifySuccess())
-                || (result == Result.UNSTABLE && jobProperty.getNotifyUnstable())) {
-
-        String action = "complete";
-        String message = getBuildStatusMessage(build);
-        String color = getBuildColor(build);
-        Map<String, Object> dataMap = getData(build);
-        dataMap.put("message", message);
-        dataMap.put("color", color);
-            getBearychat(build).publish(action, dataMap);
+        if ((result == Result.ABORTED && notifier.getNotifyAborted())
+                || (result == Result.FAILURE //notify only on single failed build
+                    && previousResult != Result.FAILURE
+                    && notifier.getNotifyFailure())
+                || (result == Result.FAILURE //notify only on repeated failures
+                    && previousResult == Result.FAILURE
+                    && notifier.getNotifyRepeatedFailure())
+                || (result == Result.NOT_BUILT && notifier.getNotifyNotBuilt())
+                || (result == Result.SUCCESS
+                    && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
+                    && notifier.getNotifyBackToNormal())
+                || (result == Result.SUCCESS && notifier.getNotifySuccess())
+                || (result == Result.UNSTABLE && notifier.getNotifyUnstable())) {
+            getBearychat(r).publish(getBuildStatusMessage(r, notifier.includeTestSummary(),
+                    notifier.includeCustomMessage()), getBuildColor(r));
+            if (notifier.getCommitInfoChoice().showAnything()) {
+                getBearychat(r).publish(getCommitList(r), getBuildColor(r));
+            }
         }
     }
 
-    public String getChanges(AbstractBuild r) {
+    String getChanges(AbstractBuild r, boolean includeCustomMessage) {
         if (!r.hasChangeSetComputed()) {
             logger.info("No change set computed...");
             return null;
@@ -188,7 +144,49 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.append(" (");
         message.append(files.size());
         message.append(" file(s) changed)");
-        return message.appendOpenLink().toString();
+        message.appendOpenLink();
+        if (includeCustomMessage) {
+            message.appendCustomMessage();
+        }
+        return message.toString();
+    }
+
+    String getCommitList(AbstractBuild r) {
+        ChangeLogSet changeSet = r.getChangeSet();
+        List<Entry> entries = new LinkedList<Entry>();
+        for (Object o : changeSet.getItems()) {
+            Entry entry = (Entry) o;
+            logger.info("Entry " + o);
+            entries.add(entry);
+        }
+        if (entries.isEmpty()) {
+            logger.info("Empty change...");
+            Cause.UpstreamCause c = (Cause.UpstreamCause)r.getCause(Cause.UpstreamCause.class);
+            if (c == null) {
+                return "No Changes.";
+            }
+            String upProjectName = c.getUpstreamProject();
+            int buildNumber = c.getUpstreamBuild();
+            AbstractProject project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
+            AbstractBuild upBuild = (AbstractBuild)project.getBuildByNumber(buildNumber);
+            return getCommitList(upBuild);
+        }
+        Set<String> commits = new HashSet<String>();
+        for (Entry entry : entries) {
+            StringBuffer commit = new StringBuffer();
+            CommitInfoChoice commitInfoChoice = notifier.getCommitInfoChoice();
+            if (commitInfoChoice.showTitle()) {
+                commit.append(entry.getMsg());
+            }
+            if (commitInfoChoice.showAuthor()) {
+                commit.append(" [").append(entry.getAuthor().getDisplayName()).append("]");
+            }
+            commits.add(commit.toString());
+        }
+        MessageBuilder message = new MessageBuilder(notifier, r);
+        message.append("Changes:\n- ");
+        message.append(StringUtils.join(commits, "\n- "));
+        return message.toString();
     }
 
     static String getBuildColor(AbstractBuild r) {
@@ -202,14 +200,32 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
     }
 
-    String getBuildStatusMessage(AbstractBuild r) {
+    String getBuildStatusMessage(AbstractBuild r, boolean includeTestSummary, boolean includeCustomMessage) {
         MessageBuilder message = new MessageBuilder(notifier, r);
         message.appendStatusMessage();
         message.appendDuration();
-        return message.appendOpenLink().toString();
+        message.appendOpenLink();
+        if (includeTestSummary) {
+            message.appendTestSummary();
+        }
+        if (includeCustomMessage) {
+            message.appendCustomMessage();
+        }
+        return message.toString();
     }
 
     public static class MessageBuilder {
+
+        private static final String STARTING_STATUS_MESSAGE = "Starting...",
+                                    BACK_TO_NORMAL_STATUS_MESSAGE = "Back to normal",
+                                    STILL_FAILING_STATUS_MESSAGE = "Still Failing",
+                                    SUCCESS_STATUS_MESSAGE = "Success",
+                                    FAILURE_STATUS_MESSAGE = "Failure",
+                                    ABORTED_STATUS_MESSAGE = "Aborted",
+                                    NOT_BUILT_STATUS_MESSAGE = "Not built",
+                                    UNSTABLE_STATUS_MESSAGE = "Unstable",
+                                    UNKNOWN_STATUS_MESSAGE = "Unknown";
+
         private StringBuffer message;
         private BearychatNotifier notifier;
         private AbstractBuild build;
@@ -228,18 +244,63 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         static String getStatusMessage(AbstractBuild r) {
             if (r.isBuilding()) {
-                return "Starting...";
+                return STARTING_STATUS_MESSAGE;
             }
             Result result = r.getResult();
+            Result previousResult;
             Run previousBuild = r.getProject().getLastBuild().getPreviousBuild();
-            Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
-            if (result == Result.SUCCESS && previousResult == Result.FAILURE) return "Back to normal";
-            if (result == Result.SUCCESS) return "Success";
-            if (result == Result.FAILURE) return "Failure";
-            if (result == Result.ABORTED) return "Aborted";
-            if (result == Result.NOT_BUILT) return "Not built";
-            if (result == Result.UNSTABLE) return "Unstable";
-            return "Unknown";
+            Run previousSuccessfulBuild = r.getPreviousSuccessfulBuild();
+            boolean buildHasSucceededBefore = previousSuccessfulBuild != null;
+
+            /*
+             * If the last build was aborted, go back to find the last non-aborted build.
+             * This is so that aborted builds do not affect build transitions.
+             * I.e. if build 1 was failure, build 2 was aborted and build 3 was a success the transition
+             * should be failure -> success (and therefore back to normal) not aborted -> success.
+             */
+            Run lastNonAbortedBuild = previousBuild;
+            while(lastNonAbortedBuild != null && lastNonAbortedBuild.getResult() == Result.ABORTED) {
+                lastNonAbortedBuild = lastNonAbortedBuild.getPreviousBuild();
+            }
+
+
+            /* If all previous builds have been aborted, then use
+             * SUCCESS as a default status so an aborted message is sent
+             */
+            if(lastNonAbortedBuild == null) {
+                previousResult = Result.SUCCESS;
+            } else {
+                previousResult = lastNonAbortedBuild.getResult();
+            }
+
+            /* Back to normal should only be shown if the build has actually succeeded at some point.
+             * Also, if a build was previously unstable and has now succeeded the status should be
+             * "Back to normal"
+             */
+            if (result == Result.SUCCESS
+                    && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
+                    && buildHasSucceededBefore) {
+                return BACK_TO_NORMAL_STATUS_MESSAGE;
+            }
+            if (result == Result.FAILURE && previousResult == Result.FAILURE) {
+                return STILL_FAILING_STATUS_MESSAGE;
+            }
+            if (result == Result.SUCCESS) {
+                return SUCCESS_STATUS_MESSAGE;
+            }
+            if (result == Result.FAILURE) {
+                return FAILURE_STATUS_MESSAGE;
+            }
+            if (result == Result.ABORTED) {
+                return ABORTED_STATUS_MESSAGE;
+            }
+            if (result == Result.NOT_BUILT) {
+                return NOT_BUILT_STATUS_MESSAGE;
+            }
+            if (result == Result.UNSTABLE) {
+                return UNSTABLE_STATUS_MESSAGE;
+            }
+            return UNKNOWN_STATUS_MESSAGE;
         }
 
         public MessageBuilder append(String string) {
@@ -253,7 +314,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         private MessageBuilder startMessage() {
-            message.append(this.escape(build.getProject().getDisplayName()));
+            message.append(this.escape(build.getProject().getFullDisplayName()));
             message.append(" - ");
             message.append(this.escape(build.getDisplayName()));
             message.append(" ");
@@ -268,11 +329,61 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         public MessageBuilder appendDuration() {
             message.append(" after ");
-            message.append(build.getDurationString());
+            String durationString;
+            if(message.toString().contains(BACK_TO_NORMAL_STATUS_MESSAGE)){
+                durationString = createBackToNormalDurationString();
+            } else {
+                durationString = build.getDurationString();
+            }
+            message.append(durationString);
             return this;
         }
 
-        public String escape(String string){
+        public MessageBuilder appendTestSummary() {
+            AbstractTestResultAction<?> action = this.build
+                    .getAction(AbstractTestResultAction.class);
+            if (action != null) {
+                int total = action.getTotalCount();
+                int failed = action.getFailCount();
+                int skipped = action.getSkipCount();
+                message.append("\nTest Status:\n");
+                message.append("\tPassed: " + (total - failed - skipped));
+                message.append(", Failed: " + failed);
+                message.append(", Skipped: " + skipped);
+            } else {
+                message.append("\nNo Tests found.");
+            }
+            return this;
+        }
+
+        public MessageBuilder appendCustomMessage() {
+            String customMessage = notifier.getCustomMessage();
+            EnvVars envVars = new EnvVars();
+            try {
+                envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
+            } catch (IOException e) {
+                logger.log(SEVERE, e.getMessage(), e);
+            } catch (InterruptedException e) {
+                logger.log(SEVERE, e.getMessage(), e);
+            }
+            message.append("\n");
+            message.append(envVars.expand(customMessage));
+            return this;
+        }
+
+        private String createBackToNormalDurationString(){
+            Run previousSuccessfulBuild = build.getPreviousSuccessfulBuild();
+            long previousSuccessStartTime = previousSuccessfulBuild.getStartTimeInMillis();
+            long previousSuccessDuration = previousSuccessfulBuild.getDuration();
+            long previousSuccessEndTime = previousSuccessStartTime + previousSuccessDuration;
+            long buildStartTime = build.getStartTimeInMillis();
+            long buildDuration = build.getDuration();
+            long buildEndTime = buildStartTime + buildDuration;
+            long backToNormalDuration = buildEndTime - previousSuccessEndTime;
+            return Util.getTimeSpanString(backToNormalDuration);
+        }
+
+        public String escape(String string) {
             string = string.replace("&", "&amp;");
             string = string.replace("<", "&lt;");
             string = string.replace(">", "&gt;");
