@@ -7,6 +7,8 @@ import org.apache.commons.httpclient.methods.PostMethod;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,7 +42,7 @@ public class StandardBearychatService implements BearychatService {
         Map<String, Object> dataMap = new HashMap<String, Object>();
         dataMap.put("message", message);
         dataMap.put("color", color);
-        publish("unknown", dataMap);
+        return publish("unknown", dataMap);
     }
 
     public boolean publish(String action, Map<String, Object> dataMap) {
@@ -117,8 +119,9 @@ public class StandardBearychatService implements BearychatService {
         return result;
     }
 
-    public string genPostUrl(){
+    public String genPostUrl(){
         String url = scheme + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
+        return url;
     }
 
     protected HttpClient getHttpClient() {

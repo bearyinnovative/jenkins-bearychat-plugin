@@ -14,20 +14,23 @@ import hudson.model.Run;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.ChangeLogSet.AffectedFile;
 import hudson.scm.ChangeLogSet.Entry;
-import hudson.tasks.test.AbstractTestResultAction;
-import hudson.triggers.SCMTrigger;
 import hudson.util.LogTaskListener;
+
 import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
+
+import jenkins.model.JenkinsLocationConfiguration;
 
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
@@ -75,8 +78,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         String jobDisplayName = build.getDisplayName();
         String duration = build.getDurationString();
         String status = MessageBuilder.getStatusMessage(build);
-        String customMessage = getCustomMessage();
-        String commitMessage = getCommitMessage();
+        String commitMessage = getCommitMessage(build);
 
         Map<String, String> jobMap = new HashMap<String, String>();
         jobMap.put("id", id);
@@ -85,8 +87,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
         jobMap.put("display_name", jobDisplayName);
         jobMap.put("status", status);
         jobMap.put("duration", duration);
-        jobMap.put("custom_message", customMessage);
         jobMap.put("commit_message", commitMessage);
+
+        if(notifier.includeCustomMessage()){
+            String customMessage = getCustomMessage(build);
+            jobMap.put("custom_message", customMessage);
+        }
 
 
 
@@ -121,7 +127,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return result;
     }
 
-    public String getCustomMessage(){
+    public String getCustomMessage(AbstractBuild build){
          String customMessage = notifier.getCustomMessage();
          EnvVars envVars = new EnvVars();
          try {
@@ -135,7 +141,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
          return customMessage;
     }
 
-    String getChanges(AbstractBuild r, boolean includeCustomMessage) {
+    String getChanges(AbstractBuild r) {
         if (!r.hasChangeSetComputed()) {
             logger.info("No change set computed...");
             return null;
@@ -189,7 +195,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             return getCommitMessage(upBuild);
         }
 
-        StringBuffer commits = new StringBuilder();
+        StringBuffer commits = new StringBuffer();
         for (int i=0; i < 5 && i<entries.size(); i++) {
             Entry entry = entries.get(i);
             StringBuffer commit = new StringBuffer();
@@ -197,8 +203,8 @@ public class ActiveNotifier implements FineGrainedNotifier {
             commit.append(" [").append(entry.getAuthor().getDisplayName()).append("]");
             commits.append("- ").append(commit.toString()).append("\n");
         }
-        if(commits.size() > 5){
-            int left = commits.size() - 5;
+        if(entries.size() > 5){
+            int left = entries.size() - 5;
             commits.append(left).append(" more...");
         }
 
@@ -213,22 +219,23 @@ public class ActiveNotifier implements FineGrainedNotifier {
         } else if (result == Result.FAILURE) {
             color = "red";
         } else if (result == Result.UNSTABLE) {
-            coor = "yellow";
+            color = "yellow";
         } else{
             color = "grey";
         }
         return color;
     }
 
-    String getBuildStatusMessage(AbstractBuild r, boolean includeCustomMessage) {
+    String getBuildStatusMessage(AbstractBuild r) {
         MessageBuilder message = new MessageBuilder(notifier, r);
         message.appendStatusMessage();
         message.appendDuration();
         message.appendOpenLink();
 
-        if (includeCustomMessage) {
+        if(notifier.includeCustomMessage()){
             message.appendCustomMessage();
         }
+
         return message.toString();
     }
 
@@ -252,7 +259,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         String color = "green";
         Run previousBuild = build.getProject().getLastBuild().getPreviousBuild();
         Result lastResult = previousBuild.getResult();
-        if(lastResult != null && lastResult == Reuslt.FAILURE){
+        if(lastResult != null && lastResult == Result.FAILURE){
             color = "red";
         }
 
@@ -265,9 +272,9 @@ public class ActiveNotifier implements FineGrainedNotifier {
     public void finalized(AbstractBuild r) {
     }
 
-    public void completed(AbstractBuild r) {
-        AbstractProject<?, ?> project = r.getProject();
-        Result result = r.getResult();
+    public void completed(AbstractBuild build) {
+        AbstractProject<?, ?> project = build.getProject();
+        Result result = build.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild();
         do {
             previousBuild = previousBuild.getPreviousCompletedBuild();
@@ -279,8 +286,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
                     && previousResult != Result.FAILURE
                     && notifier.getNotifyFailure())
                 || (result == Result.FAILURE //notify only on repeated failures
-                    && previousResult == Result.FAILURE
-                    && notifier.getNotifyRepeatedFailure())
+                    && previousResult == Result.FAILURE)
                 || (result == Result.NOT_BUILT && notifier.getNotifyNotBuilt())
                 || (result == Result.SUCCESS
                     && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
@@ -301,13 +307,13 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     public static class MessageBuilder {
 
-        private static final String STARTING_STATUS_MESSAGE = "Starting...",
+        private static final String STARTING_STATUS_MESSAGE = "Starting",
                                     BACK_TO_NORMAL_STATUS_MESSAGE = "Back to normal",
                                     STILL_FAILING_STATUS_MESSAGE = "Still Failing",
                                     SUCCESS_STATUS_MESSAGE = "Success",
                                     FAILURE_STATUS_MESSAGE = "Failure",
                                     ABORTED_STATUS_MESSAGE = "Aborted",
-                                    NOT_BUILT_STATUS_MESSAGE = "Not built",
+                                    NOT_BUILT_STATUS_MESSAGE = "NotBuilt",
                                     UNSTABLE_STATUS_MESSAGE = "Unstable",
                                     UNKNOWN_STATUS_MESSAGE = "Unknown";
 

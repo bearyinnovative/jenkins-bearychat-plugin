@@ -3,5 +3,6 @@ target
 .idea
 .project
 .settings
+.swp
 bin
 work
