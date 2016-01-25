@@ -293,7 +293,7 @@ public class BearychatNotifier extends Notifier {
                 }
                 BearychatService testBearychatService = getBearychatService(targetDomain, targetToken, targetRoom);
                 String message = "BearyChat Jenkins Plugin has been configured correctly. " + targetBuildServerUrl;
-                boolean success = testBearychatService.publish(message);
+                boolean success = testBearychatService.publish("ping", message, "green");
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());

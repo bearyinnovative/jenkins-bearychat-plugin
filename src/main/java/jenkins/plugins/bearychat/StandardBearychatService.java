@@ -39,10 +39,14 @@ public class StandardBearychatService implements BearychatService {
     }
 
     public boolean publish(String message, String color) {
+        return publish("unknown", message, color);
+    }
+
+    public boolean publish(String action, String message, String color) {
         Map<String, Object> dataMap = new HashMap<String, Object>();
         dataMap.put("message", message);
         dataMap.put("color", color);
-        return publish("unknown", dataMap);
+        return publish(action, dataMap);
     }
 
     public boolean publish(String action, Map<String, Object> dataMap) {
@@ -65,29 +69,36 @@ public class StandardBearychatService implements BearychatService {
                 dataJson.put("authors", dataMap.get("authors"));
                 dataJson.put("files", dataMap.get("files"));
 
+
                 Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
-                JSONObject configJson = new JSONObject();
-                for(String key : configMap.keySet()){
-                    Object val = configMap.get(key);
-                    configJson.put(key, val);
+                if(configMap != null){
+                    JSONObject configJson = new JSONObject();
+                    for(String key : configMap.keySet()){
+                        Object val = configMap.get(key);
+                        configJson.put(key, val);
+                    }
+                    dataJson.put("config", configJson);
                 }
-                dataJson.put("config", configJson);
 
                 Map<String,String> projectMap = (Map<String,String>)dataMap.get("project");
-                JSONObject projectJson = new JSONObject();
-                for(String key : projectMap.keySet()){
-                    Object val = projectMap.get(key);
-                    projectJson.put(key, val);
+                if(projectMap != null){
+                    JSONObject projectJson = new JSONObject();
+                    for(String key : projectMap.keySet()){
+                        Object val = projectMap.get(key);
+                        projectJson.put(key, val);
+                    }
+                    dataJson.put("project", projectJson);
                 }
-                dataJson.put("project", projectJson);
 
                 Map<String,String> jobMap = (Map<String,String>)dataMap.get("job");
-                JSONObject jobJson = new JSONObject();
-                for(String key : jobMap.keySet()){
-                    Object val = jobMap.get(key);
-                    jobJson.put(key, val);
+                if(jobMap != null){
+                    JSONObject jobJson = new JSONObject();
+                    for(String key : jobMap.keySet()){
+                        Object val = jobMap.get(key);
+                        jobJson.put(key, val);
+                    }
+                    dataJson.put("job", jobJson);
                 }
-                dataJson.put("job", jobJson);
             }
             String data = dataJson.toString();
 
