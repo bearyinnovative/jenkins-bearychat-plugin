@@ -29,9 +29,9 @@
     </f:entry>
 
     <f:advanced>
-        <f:optionalBlock name="includeCustomMessage" title="Include Custom Message" checked="${instance.includeCustomMessage()}">
-            <f:entry title="Custom Message" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
-                <f:textarea name="customMessage" value="${instance.getCustomMessage()}"/>
+        <f:optionalBlock name="includeBearychatCustomMessage" title="Custom Message" checked="${instance.includeBearychatCustomMessage()}">
+            <f:entry title="" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
+                <f:textarea name="bearychatCustomMessage" value="${instance.getBearychatCustomMessage()}"/>
             </f:entry>
         </f:optionalBlock>
 

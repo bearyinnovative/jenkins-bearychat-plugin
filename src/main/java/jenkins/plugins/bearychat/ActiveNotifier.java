@@ -89,7 +89,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         jobMap.put("duration", duration);
         jobMap.put("commit_message", commitMessage);
 
-        if(notifier.includeCustomMessage()){
+        if(notifier.includeBearychatCustomMessage()){
             String customMessage = getCustomMessage(build);
             jobMap.put("custom_message", customMessage);
         }
@@ -128,7 +128,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public String getCustomMessage(AbstractBuild build){
-         String customMessage = notifier.getCustomMessage();
+         String customMessage = notifier.getBearychatCustomMessage();
          EnvVars envVars = new EnvVars();
          try {
              envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
@@ -232,7 +232,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.appendDuration();
         message.appendOpenLink();
 
-        if(notifier.includeCustomMessage()){
+        if(notifier.includeBearychatCustomMessage()){
             message.appendCustomMessage();
         }
 
@@ -431,7 +431,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         public MessageBuilder appendCustomMessage() {
-            String customMessage = notifier.getCustomMessage();
+            String customMessage = notifier.getBearychatCustomMessage();
             EnvVars envVars = new EnvVars();
             try {
                 envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
