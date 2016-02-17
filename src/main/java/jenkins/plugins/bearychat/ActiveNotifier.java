@@ -258,7 +258,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         String color = "green";
         Run previousBuild = build.getProject().getLastBuild().getPreviousBuild();
-        Result lastResult = previousBuild.getResult();
+        Result lastResult = previousBuild == null ? null : previousBuild.getResult();
         if(lastResult != null && lastResult == Result.FAILURE){
             color = "red";
         }
@@ -277,7 +277,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         Result result = build.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild();
         do {
-            previousBuild = previousBuild.getPreviousCompletedBuild();
+            previousBuild = previousBuild == null ? null : previousBuild.getPreviousCompletedBuild();
         } while (previousBuild != null && previousBuild.getResult() == Result.ABORTED);
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
 
