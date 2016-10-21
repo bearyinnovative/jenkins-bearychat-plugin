@@ -191,6 +191,9 @@ public class ActiveNotifier implements FineGrainedNotifier {
             String upProjectName = c.getUpstreamProject();
             int buildNumber = c.getUpstreamBuild();
             AbstractProject project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
+	    if (project == null) {
+		return "No Commit Changes.";
+	    }
             AbstractBuild upBuild = (AbstractBuild)project.getBuildByNumber(buildNumber);
             return getCommitMessage(upBuild);
         }
