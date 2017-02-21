@@ -30,8 +30,11 @@
 
     <f:advanced>
         <f:optionalBlock name="includeBearychatCustomMessage" title="Custom Message" checked="${instance.includeBearychatCustomMessage()}">
-            <f:entry title="" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
+            <f:entry title="Start" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
                 <f:textarea name="bearychatCustomMessage" value="${instance.getBearychatCustomMessage()}"/>
+            </f:entry>
+            <f:entry title="End" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatEndCustomMessage.html">
+                 <f:textarea name="bearychatEndCustomMessage" value="${instance.getBearychatEndCustomMessage()}"/>
             </f:entry>
         </f:optionalBlock>
 

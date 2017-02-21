@@ -50,7 +50,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return notifier.newBearychatService(r, listener);
     }
 
-    public Map<String, Object> getData(AbstractBuild build){
+    public Map<String, Object> getData(AbstractBuild build) {
         JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
         String configUrl = notifier.getBuildServerUrl();
 
@@ -89,9 +89,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
         jobMap.put("duration", duration);
         jobMap.put("commit_message", commitMessage);
 
-        if(notifier.includeBearychatCustomMessage()){
+        if(notifier.includeBearychatCustomMessage()) {
             String customMessage = getCustomMessage(build);
             jobMap.put("custom_message", customMessage);
+
+            String customEndMessage = getCustomEndMessage(build);
+            jobMap.put("custom_end_message", customEndMessage);
         }
 
 
@@ -110,7 +113,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         Set<String> authors = new HashSet<String>();
         for (Entry entry : entries) {
             String displayName = entry.getAuthor().getDisplayName();
-            if(!"".equals(nonsense)){
+            if(!"".equals(nonsense)) {
                 authors.add(displayName);
             }
         }
@@ -127,7 +130,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return result;
     }
 
-    public String getCustomMessage(AbstractBuild build){
+    public String getCustomMessage(AbstractBuild build) {
          String customMessage = notifier.getBearychatCustomMessage();
          EnvVars envVars = new EnvVars();
          try {
@@ -139,6 +142,20 @@ public class ActiveNotifier implements FineGrainedNotifier {
              logger.log(SEVERE, e.getMessage(), e);
          }
          return customMessage;
+    }
+
+    public String getCustomEndMessage(AbstractBuild build) {
+        String customEndMessage = notifier.getBearychatEndCustomMessage();
+        EnvVars envVars = new EnvVars();
+        try {
+            envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
+            customEndMessage = envVars.expand(customEndMessage);
+        } catch (IOException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        } catch (InterruptedException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        }
+        return customEndMessage;
     }
 
     String getChanges(AbstractBuild r) {
@@ -206,7 +223,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             commit.append(" [").append(entry.getAuthor().getDisplayName()).append("]");
             commits.append("- ").append(commit.toString()).append("\n");
         }
-        if(entries.size() > 5){
+        if(entries.size() > 5) {
             int left = entries.size() - 5;
             commits.append(left).append(" more...");
         }
@@ -235,7 +252,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.appendDuration();
         message.appendOpenLink();
 
-        if(notifier.includeBearychatCustomMessage()){
+        if(notifier.includeBearychatCustomMessage()) {
             message.appendCustomMessage();
         }
 
@@ -262,7 +279,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         String color = "green";
         Run previousBuild = build.getProject().getLastBuild().getPreviousBuild();
         Result lastResult = previousBuild == null ? null : previousBuild.getResult();
-        if(lastResult != null && lastResult == Result.FAILURE){
+        if(lastResult != null && lastResult == Result.FAILURE) {
             color = "red";
         }
 
@@ -424,7 +441,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         public MessageBuilder appendDuration() {
             message.append(" after ");
             String durationString;
-            if(message.toString().contains(BACK_TO_NORMAL_STATUS_MESSAGE)){
+            if(message.toString().contains(BACK_TO_NORMAL_STATUS_MESSAGE)) {
                 durationString = createBackToNormalDurationString();
             } else {
                 durationString = build.getDurationString();
@@ -448,7 +465,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             return this;
         }
 
-        private String createBackToNormalDurationString(){
+        private String createBackToNormalDurationString() {
             Run previousSuccessfulBuild = build.getPreviousSuccessfulBuild();
             long previousSuccessStartTime = previousSuccessfulBuild.getStartTimeInMillis();
             long previousSuccessDuration = previousSuccessfulBuild.getDuration();
