@@ -42,6 +42,7 @@ public class BearychatNotifier extends Notifier {
     private boolean notifyRepeatedFailure;
     private boolean includeBearychatCustomMessage;
     private String bearychatCustomMessage;
+    private String bearychatEndCustomMessage;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -109,11 +110,15 @@ public class BearychatNotifier extends Notifier {
         return bearychatCustomMessage;
     }
 
+    public String getBearychatEndCustomMessage() {
+        return bearychatEndCustomMessage;
+    }
+
     @DataBoundConstructor
     public BearychatNotifier(final String teamDomain, final String authToken, final String room, final String buildServerUrl,
                              final String sendAs, final boolean startNotification, final boolean notifyAborted, final boolean notifyFailure,
                              final boolean notifyNotBuilt, final boolean notifySuccess, final boolean notifyUnstable, final boolean notifyBackToNormal,
-                             boolean includeBearychatCustomMessage, String bearychatCustomMessage) {
+                             boolean includeBearychatCustomMessage, String bearychatCustomMessage, String bearychatEndCustomMessage) {
         super();
         this.teamDomain = teamDomain;
         this.authToken = authToken;
@@ -129,6 +134,7 @@ public class BearychatNotifier extends Notifier {
         this.notifyBackToNormal = notifyBackToNormal;
         this.includeBearychatCustomMessage = includeBearychatCustomMessage;
         this.bearychatCustomMessage = bearychatCustomMessage;
+        this.bearychatEndCustomMessage = bearychatEndCustomMessage;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -239,8 +245,10 @@ public class BearychatNotifier extends Notifier {
             boolean notifyBackToNormal = "true".equals(sr.getParameter("bearychatNotifyBackToNormal"));
             boolean includeBearychatCustomMessage = "on".equals(sr.getParameter("includeBearychatCustomMessage"));
             String bearychatCustomMessage = sr.getParameter("bearychatCustomMessage");
+            String bearychatEndCustomMessage = sr.getParameter("bearychatEndCustomMessage");
             return new BearychatNotifier(teamDomain, token, room, buildServerUrl, sendAs, startNotification, notifyAborted,
-                    notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal, includeBearychatCustomMessage, bearychatCustomMessage);
+                    notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal,
+                    includeBearychatCustomMessage, bearychatCustomMessage, bearychatEndCustomMessage);
         }
 
         @Override
