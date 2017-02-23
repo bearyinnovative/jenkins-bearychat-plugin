@@ -73,9 +73,8 @@ public class StandardBearychatService implements BearychatService {
                 Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
                 if(configMap != null){
                     JSONObject configJson = new JSONObject();
-                    for(String key : configMap.keySet()){
-                        Object val = configMap.get(key);
-                        configJson.put(key, val);
+                    for(Map.Entry<String, String> entry : configMap.entrySet()){
+                        configJson.put(entry.getKey(), entry.getValue());
                     }
                     dataJson.put("config", configJson);
                 }
@@ -83,9 +82,8 @@ public class StandardBearychatService implements BearychatService {
                 Map<String,String> projectMap = (Map<String,String>)dataMap.get("project");
                 if(projectMap != null){
                     JSONObject projectJson = new JSONObject();
-                    for(String key : projectMap.keySet()){
-                        Object val = projectMap.get(key);
-                        projectJson.put(key, val);
+                    for(Map.Entry<String, String> entry : projectMap.entrySet()){
+                        projectJson.put(entry.getKey(), entry.getValue());
                     }
                     dataJson.put("project", projectJson);
                 }
@@ -93,9 +91,8 @@ public class StandardBearychatService implements BearychatService {
                 Map<String,String> jobMap = (Map<String,String>)dataMap.get("job");
                 if(jobMap != null){
                     JSONObject jobJson = new JSONObject();
-                    for(String key : jobMap.keySet()){
-                        Object val = jobMap.get(key);
-                        jobJson.put(key, val);
+                    for(Map.Entry<String, String> entry : jobMap.entrySet()){
+                        jobJson.put(entry.getKey(), entry.getValue());
                     }
                     dataJson.put("job", jobJson);
                 }
@@ -121,6 +118,8 @@ public class StandardBearychatService implements BearychatService {
                 logger.info("Posting succeeded");
             }
 
+        } catch (NullPointerException e) {
+            result = false;
         } catch (Exception e) {
             result = false;
             logger.log(Level.WARNING, "Error posting to BearyChat", e);
@@ -137,21 +136,20 @@ public class StandardBearychatService implements BearychatService {
 
     protected HttpClient getHttpClient() {
         HttpClient client = new HttpClient();
-        if (Jenkins.getInstance() != null) {
-            ProxyConfiguration proxy = Jenkins.getInstance().proxy;
-            if (proxy != null) {
-                client.getHostConfiguration().setProxy(proxy.name, proxy.port);
-                String username = proxy.getUserName();
-                String password = proxy.getPassword();
-                // Consider it to be passed if username specified. Sufficient?
-                if (username != null && !"".equals(username.trim())) {
-                    logger.info("Using proxy authentication (user=" + username + ")");
-                    // http://hc.apache.org/httpclient-3.x/authentication.html#Proxy_Authentication
-                    // and
-                    // http://svn.apache.org/viewvc/httpcomponents/oac.hc3x/trunk/src/examples/BasicAuthenticationExample.java?view=markup
-                    client.getState().setProxyCredentials(AuthScope.ANY,
+        Jenkins instance = Jenkins.getInstance();
+        ProxyConfiguration proxy = instance == null ? null : instance.proxy;
+        if (proxy != null) {
+            client.getHostConfiguration().setProxy(proxy.name, proxy.port);
+            String username = proxy.getUserName();
+            String password = proxy.getPassword();
+            // Consider it to be passed if username specified. Sufficient?
+            if (username != null && !"".equals(username.trim())) {
+                logger.info("Using proxy authentication (user=" + username + ")");
+                // http://hc.apache.org/httpclient-3.x/authentication.html#Proxy_Authentication
+                // and
+                // http://svn.apache.org/viewvc/httpcomponents/oac.hc3x/trunk/src/examples/BasicAuthenticationExample.java?view=markup
+                client.getState().setProxyCredentials(AuthScope.ANY,
                         new UsernamePasswordCredentials(username, password));
-                }
             }
         }
         return client;

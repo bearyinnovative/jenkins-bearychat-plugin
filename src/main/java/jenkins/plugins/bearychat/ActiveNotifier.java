@@ -51,7 +51,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public Map<String, Object> getData(AbstractBuild build) {
-        JenkinsLocationConfiguration globalConfig = new JenkinsLocationConfiguration();
         String configUrl = notifier.getBuildServerUrl();
 
         Map<String, String> configMap = new HashMap<String, String>();
@@ -132,7 +131,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     public String getCustomMessage(AbstractBuild build) {
          String customMessage = notifier.getBearychatCustomMessage();
-         EnvVars envVars = new EnvVars();
+         EnvVars envVars = null;
          try {
              envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
              customMessage = envVars.expand(customMessage);
@@ -146,7 +145,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     public String getCustomEndMessage(AbstractBuild build) {
         String customEndMessage = notifier.getBearychatEndCustomMessage();
-        EnvVars envVars = new EnvVars();
+        EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
             customEndMessage = envVars.expand(customEndMessage);
@@ -207,10 +206,16 @@ public class ActiveNotifier implements FineGrainedNotifier {
             }
             String upProjectName = c.getUpstreamProject();
             int buildNumber = c.getUpstreamBuild();
-            AbstractProject project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
-	    if (project == null) {
-		return "No Commit Changes.";
-	    }
+            AbstractProject project = null;
+            try {
+                project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
+            } catch (NullPointerException e) {
+                logger.info("get project failure");
+            }
+
+            if (project == null) {
+                return "No Commit Changes.";
+            }
             AbstractBuild upBuild = (AbstractBuild)project.getBuildByNumber(buildNumber);
             return getCommitMessage(upBuild);
         }
@@ -277,7 +282,15 @@ public class ActiveNotifier implements FineGrainedNotifier {
         String action = "start";
 
         String color = "green";
-        Run previousBuild = build.getProject().getLastBuild().getPreviousBuild();
+        Run previousBuild = null;
+        try {
+            previousBuild = build.getProject().getLastBuild().getPreviousBuild();
+        } catch (NullPointerException e) {
+            logger.info("get previous build failure");
+        } catch (Exception e) {
+            logger.info("get previous build failure");
+            color = "green";
+        }
         Result lastResult = previousBuild == null ? null : previousBuild.getResult();
         if(lastResult != null && lastResult == Result.FAILURE) {
             color = "red";
@@ -359,7 +372,15 @@ public class ActiveNotifier implements FineGrainedNotifier {
             }
             Result result = r.getResult();
             Result previousResult;
-            Run previousBuild = r.getProject().getLastBuild().getPreviousBuild();
+            Run previousBuild = null;
+            try {
+                previousBuild = r.getProject().getLastBuild().getPreviousBuild();
+            } catch (NullPointerException e) {
+                logger.info("get previous build failure");
+            } catch (Exception e) {
+                logger.info("get previous build failure");
+            }
+
             Run previousSuccessfulBuild = r.getPreviousSuccessfulBuild();
             boolean buildHasSucceededBefore = previousSuccessfulBuild != null;
 
@@ -466,15 +487,23 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         private String createBackToNormalDurationString() {
-            Run previousSuccessfulBuild = build.getPreviousSuccessfulBuild();
-            long previousSuccessStartTime = previousSuccessfulBuild.getStartTimeInMillis();
-            long previousSuccessDuration = previousSuccessfulBuild.getDuration();
-            long previousSuccessEndTime = previousSuccessStartTime + previousSuccessDuration;
-            long buildStartTime = build.getStartTimeInMillis();
-            long buildDuration = build.getDuration();
-            long buildEndTime = buildStartTime + buildDuration;
-            long backToNormalDuration = buildEndTime - previousSuccessEndTime;
-            return Util.getTimeSpanString(backToNormalDuration);
+            long backToNormalDuration = 0;
+            try {
+                Run previousSuccessfulBuild = build.getPreviousSuccessfulBuild();
+                long previousSuccessStartTime = previousSuccessfulBuild.getStartTimeInMillis();
+                long previousSuccessDuration = previousSuccessfulBuild.getDuration();
+                long previousSuccessEndTime = previousSuccessStartTime + previousSuccessDuration;
+                long buildStartTime = build.getStartTimeInMillis();
+                long buildDuration = build.getDuration();
+                long buildEndTime = buildStartTime + buildDuration;
+                backToNormalDuration = buildEndTime - previousSuccessEndTime;
+                return Util.getTimeSpanString(backToNormalDuration);
+            } catch (NullPointerException e) {
+                return Util.getTimeSpanString(backToNormalDuration);
+            } catch (Exception e) {
+                return Util.getTimeSpanString(backToNormalDuration);
+            }
+
         }
 
         public String escape(String string) {
