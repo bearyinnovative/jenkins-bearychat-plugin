@@ -62,7 +62,7 @@ public class BearychatNotifier extends Notifier {
     }
 
     public String getBuildServerUrl() {
-        if(buildServerUrl == null || buildServerUrl == "") {
+        if(StringUtils.isEmpty(buildServerUrl)) {
             JenkinsLocationConfiguration jenkinsConfig = new JenkinsLocationConfiguration();
             return jenkinsConfig.getUrl();
         } else {
@@ -214,7 +214,7 @@ public class BearychatNotifier extends Notifier {
         }
 
         public String getBuildServerUrl() {
-            if(buildServerUrl == null || buildServerUrl == "") {
+            if(StringUtils.isEmpty(buildServerUrl)) {
                 JenkinsLocationConfiguration jenkinsConfig = new JenkinsLocationConfiguration();
                 return jenkinsConfig.getUrl();
             }
@@ -258,7 +258,7 @@ public class BearychatNotifier extends Notifier {
             room = sr.getParameter("bearychatRoom");
             buildServerUrl = sr.getParameter("bearychatBuildServerUrl");
             sendAs = sr.getParameter("bearychatSendAs");
-            if(buildServerUrl == null || buildServerUrl == "") {
+            if(StringUtils.isEmpty(buildServerUrl)) {
                 JenkinsLocationConfiguration jenkinsConfig = new JenkinsLocationConfiguration();
                 buildServerUrl = jenkinsConfig.getUrl();
             }
