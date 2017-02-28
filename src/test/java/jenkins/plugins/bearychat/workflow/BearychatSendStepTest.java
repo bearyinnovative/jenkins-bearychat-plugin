@@ -38,45 +38,45 @@ public class BearychatSendStepTest {
     @Mock
     StepContext stepContextMock;
     @Mock
-    BearychatService slackServiceMock;
+    BearychatService bearychatServiceMock;
     @Mock
     Jenkins jenkins;
     @Mock
-    BearychatNotifier.DescriptorImpl slackDescMock;
+    BearychatNotifier.DescriptorImpl bearychatDescMock;
 
     @Before
     public void setUp() {
         PowerMockito.mockStatic(Jenkins.class);
-        when(jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class)).thenReturn(slackDescMock);
+        when(jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class)).thenReturn(bearychatDescMock);
     }
 
     @Test
     public void testStepOverrides() throws Exception {
         /*
         BearychatSendStep.BearychatSendStepExecution stepExecution = spy(new BearychatSendStep.BearychatSendStepExecution());
-        BearychatSendStep slackSendStep = new BearychatSendStep("message");
-        slackSendStep.setToken("token");
-        slackSendStep.setTeamDomain("teamDomain");
-        slackSendStep.setChannel("channel");
-        slackSendStep.setColor("good");
-        stepExecution.step = slackSendStep;
+        BearychatSendStep bearychatSendStep = new BearychatSendStep("message");
+        bearychatSendStep.setToken("token");
+        bearychatSendStep.setTeamDomain("teamDomain");
+        bearychatSendStep.setChannel("channel");
+        bearychatSendStep.setColor("good");
+        stepExecution.step = bearychatSendStep;
 
         when(Jenkins.getInstance()).thenReturn(jenkins);
 
         stepExecution.listener = taskListenerMock;
 
-        when(slackDescMock.getToken()).thenReturn("differentToken");
+        when(bearychatDescMock.getToken()).thenReturn("differentToken");
 
 
         when(taskListenerMock.getLogger()).thenReturn(printStreamMock);
         doNothing().when(printStreamMock).println();
 
-        when(stepExecution.getSlackService(anyString(), anyString(), anyString())).thenReturn(slackServiceMock);
-        when(slackServiceMock.publish(anyString(), anyString())).thenReturn(true);
+        when(stepExecution.getBearychatService(anyString(), anyString(), anyString())).thenReturn(bearychatServiceMock);
+        when(bearychatServiceMock.publish(anyString(), anyString())).thenReturn(true);
 
         stepExecution.run();
-        verify(stepExecution, times(1)).getSlackService("teamDomain", "token", "channel");
-        verify(slackServiceMock, times(1)).publish("message", "good");
+        verify(stepExecution, times(1)).getBearychatService("teamDomain", "token", "channel");
+        verify(bearychatServiceMock, times(1)).publish("message", "good");
         assertFalse(stepExecution.step.isFailOnError());*/
     }
 
@@ -90,18 +90,18 @@ public class BearychatSendStepTest {
 
         stepExecution.listener = taskListenerMock;
 
-        when(slackDescMock.getTeamDomain()).thenReturn("globalTeamDomain");
-        when(slackDescMock.getToken()).thenReturn("globalToken");
-        when(slackDescMock.getRoom()).thenReturn("globalChannel");
+        when(bearychatDescMock.getTeamDomain()).thenReturn("globalTeamDomain");
+        when(bearychatDescMock.getToken()).thenReturn("globalToken");
+        when(bearychatDescMock.getRoom()).thenReturn("globalChannel");
 
         when(taskListenerMock.getLogger()).thenReturn(printStreamMock);
         doNothing().when(printStreamMock).println();
 
-        when(stepExecution.getSlackService(anyString(), anyString(), anyString())).thenReturn(slackServiceMock);
+        when(stepExecution.getBearychatService(anyString(), anyString(), anyString())).thenReturn(bearychatServiceMock);
 
         stepExecution.run();
-        verify(stepExecution, times(1)).getSlackService("globalTeamDomain", "globalToken", "globalChannel");
-        verify(slackServiceMock, times(1)).publish("message", "");
+        verify(stepExecution, times(1)).getBearychatService("globalTeamDomain", "globalToken", "globalChannel");
+        verify(bearychatServiceMock, times(1)).publish("message", "");
         assertNull(stepExecution.step.getTeamDomain());
         assertNull(stepExecution.step.getToken());
         assertNull(stepExecution.step.getChannel());
@@ -113,9 +113,9 @@ public class BearychatSendStepTest {
     public void testNonNullEmptyColor() throws Exception {
 /*
         BearychatSendStep.BearychatSendStepExecution stepExecution = spy(new BearychatSendStep.BearychatSendStepExecution());
-        BearychatSendStep slackSendStep = new BearychatSendStep("message");
-        slackSendStep.setColor("");
-        stepExecution.step = slackSendStep;
+        BearychatSendStep bearychatSendStep = new BearychatSendStep("message");
+        bearychatSendStep.setColor("");
+        stepExecution.step = bearychatSendStep;
 
         when(Jenkins.getInstance()).thenReturn(jenkins);
 
@@ -124,10 +124,10 @@ public class BearychatSendStepTest {
         when(taskListenerMock.getLogger()).thenReturn(printStreamMock);
         doNothing().when(printStreamMock).println();
 
-        when(stepExecution.getSlackService(anyString(), anyString(), anyString())).thenReturn(slackServiceMock);
+        when(stepExecution.getBearychatService(anyString(), anyString(), anyString())).thenReturn(bearychatServiceMock);
 
         stepExecution.run();
-        verify(slackServiceMock, times(1)).publish("message", "");
+        verify(bearychatServiceMock, times(1)).publish("message", "");
         assertNull(stepExecution.step.getColor());
         */
     }

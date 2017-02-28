@@ -31,7 +31,7 @@ import javax.inject.Inject;
 //import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 
 /**
- * Workflow step to send a Slack channel notification.
+ * Workflow step to send a Bearychat channel notification.
  */
 public class BearychatSendStep extends AbstractStepImpl {
 
@@ -134,20 +134,6 @@ public class BearychatSendStep extends AbstractStepImpl {
         public String getDisplayName() {
             return Messages.BearychatSendStepDisplayName();
         }
-/*
-        public ListBoxModel doFillTokenCredentialIdItems(@AncestorInPath Project project) {
-            if (!Jenkins.getInstance().hasPermission(Jenkins.ADMINISTER)) {
-                return new ListBoxModel();
-            }
-            return new StandardListBoxModel()
-                    .withEmptySelection()
-                    .withAll(lookupCredentials(
-                            StringCredentials.class,
-                            project,
-                            ACL.SYSTEM,
-                            new HostnameRequirement("*.slack.com"))
-                    );
-        }*/
 
         //WARN users that they should not use the plain/exposed token, but rather the token credential id
         public FormValidation doCheckToken(@QueryParameter String value) {
@@ -178,27 +164,26 @@ public class BearychatSendStep extends AbstractStepImpl {
                 listener.error(Messages.NotificationFailedWithException(ne));
                 return null;
             }
-            BearychatNotifier.DescriptorImpl slackDesc = jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class);
+            BearychatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class);
             listener.getLogger().println("run BearychatSendStep, step " + step.token+":" + step.botUser+", desc ");
-            String team = step.teamDomain != null ? step.teamDomain : slackDesc.getTeamDomain();
-            //String tokenCredentialId = step.tokenCredentialId != null ? step.tokenCredentialId : slackDesc.getTokenCredentialId();
+            String team = step.teamDomain != null ? step.teamDomain : bearychatDesc.getTeamDomain();
+            //String tokenCredentialId = step.tokenCredentialId != null ? step.tokenCredentialId : bearychatDesc.getTokenCredentialId();
             
             String token;
             if (step.token != null) {
                 token = step.token;
             } else {
-                token = slackDesc.getToken();
+                token = bearychatDesc.getToken();
             }
-            String channel = step.channel != null ? step.channel : slackDesc.getRoom();
+            String channel = step.channel != null ? step.channel : bearychatDesc.getRoom();
             
             String color = step.color != null ? step.color : "";
 
             //placing in console log to simplify testing of retrieving values from global config or from step field; also used for tests
             listener.getLogger().println(Messages.BearychatSendStepConfig(step.teamDomain == null, step.token == null, step.channel == null, step.color == null));
 
-            //SlackService slackService = getSlackService(team, token, tokenCredentialId, botUser, channel);
-            BearychatService slackService = getBearychatService(team, token, channel);
-            boolean publishSuccess = slackService.publish(step.message, color);
+            BearychatService bearychatService = getBearychatService(team, token, channel);
+            boolean publishSuccess = bearychatService.publish(step.message, color);
             if (!publishSuccess && step.failOnError) {
                 throw new AbortException(Messages.NotificationFailed());
             } else if (!publishSuccess) {
