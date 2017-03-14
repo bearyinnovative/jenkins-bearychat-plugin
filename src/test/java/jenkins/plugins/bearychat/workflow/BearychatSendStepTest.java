@@ -29,6 +29,7 @@ import static org.powermock.api.mockito.PowerMockito.spy;
 @PrepareForTest({Jenkins.class,BearychatSendStep.class})
 public class BearychatSendStepTest {
 
+    /*
     @Mock
     TaskListener taskListenerMock;
     @Mock
@@ -43,11 +44,14 @@ public class BearychatSendStepTest {
     Jenkins jenkins;
     @Mock
     BearychatNotifier.DescriptorImpl bearychatDescMock;
+    */
 
     @Before
     public void setUp() {
+        /*
         PowerMockito.mockStatic(Jenkins.class);
         when(jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class)).thenReturn(bearychatDescMock);
+        */
     }
 
     @Test
