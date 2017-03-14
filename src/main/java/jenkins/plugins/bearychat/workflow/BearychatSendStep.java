@@ -164,6 +164,9 @@ public class BearychatSendStep extends AbstractStepImpl {
                 listener.error(Messages.NotificationFailedWithException(ne));
                 return null;
             }
+            if (jenkins == null) {
+                return null;
+            }
             BearychatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class);
             listener.getLogger().println("run BearychatSendStep, step " + step.token+":" + step.botUser+", desc ");
             String team = step.teamDomain != null ? step.teamDomain : bearychatDesc.getTeamDomain();
