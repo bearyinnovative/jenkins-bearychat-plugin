@@ -17,9 +17,9 @@ import hudson.ProxyConfiguration;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 
-public class StandardBearychatService implements BearychatService {
+public class StandardBearyChatService implements BearyChatService {
 
-    private static final Logger logger = Logger.getLogger(StandardBearychatService.class.getName());
+    private static final Logger logger = Logger.getLogger(StandardBearyChatService.class.getName());
 
     private String scheme = "https://";
     private String host = "bearychat.com";
@@ -27,7 +27,7 @@ public class StandardBearychatService implements BearychatService {
     private String token;
     private String room;
 
-    public StandardBearychatService(String teamDomain, String token, String room) {
+    public StandardBearyChatService(String teamDomain, String token, String room) {
         super();
         this.teamDomain = teamDomain;
         this.token = token;

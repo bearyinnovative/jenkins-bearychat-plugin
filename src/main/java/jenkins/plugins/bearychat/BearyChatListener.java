@@ -14,11 +14,11 @@ import java.util.logging.Logger;
 
 @Extension
 @SuppressWarnings("rawtypes")
-public class BearychatListener extends RunListener<AbstractBuild> {
+public class BearyChatListener extends RunListener<AbstractBuild> {
 
-    private static final Logger logger = Logger.getLogger(BearychatListener.class.getName());
+    private static final Logger logger = Logger.getLogger(BearyChatListener.class.getName());
 
-    public BearychatListener() {
+    public BearyChatListener() {
         super(AbstractBuild.class);
     }
 
@@ -50,8 +50,8 @@ public class BearychatListener extends RunListener<AbstractBuild> {
     FineGrainedNotifier getNotifier(AbstractProject project, TaskListener listener) {
         Map<Descriptor<Publisher>, Publisher> map = project.getPublishersList().toMap();
         for (Publisher publisher : map.values()) {
-            if (publisher instanceof BearychatNotifier) {
-                return new ActiveNotifier((BearychatNotifier) publisher, (BuildListener)listener);
+            if (publisher instanceof BearyChatNotifier) {
+                return new ActiveNotifier((BearyChatNotifier) publisher, (BuildListener)listener);
             }
         }
         return new DisabledNotifier();

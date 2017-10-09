@@ -2,7 +2,7 @@ package jenkins.plugins.bearychat;
 
 import java.util.Map;
 
-public interface BearychatService {
+public interface BearyChatService {
     boolean publish(String message);
 
     boolean publish(String message, String color);

@@ -23,9 +23,9 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.logging.Logger;
 
-public class BearychatNotifier extends Notifier {
+public class BearyChatNotifier extends Notifier {
 
-    private static final Logger logger = Logger.getLogger(BearychatNotifier.class.getName());
+    private static final Logger logger = Logger.getLogger(BearyChatNotifier.class.getName());
 
     private String teamDomain;
     private String authToken;
@@ -40,7 +40,7 @@ public class BearychatNotifier extends Notifier {
     private boolean notifyFailure;
     private boolean notifyBackToNormal;
     private boolean notifyRepeatedFailure;
-    private boolean includeBearychatCustomMessage;
+    private boolean includeBearyChatCustomMessage;
     private String bearychatCustomMessage;
     private String bearychatEndCustomMessage;
 
@@ -102,23 +102,23 @@ public class BearychatNotifier extends Notifier {
         return notifyBackToNormal;
     }
 
-    public boolean includeBearychatCustomMessage() {
-        return includeBearychatCustomMessage;
+    public boolean includeBearyChatCustomMessage() {
+        return includeBearyChatCustomMessage;
     }
 
-    public String getBearychatCustomMessage() {
+    public String getBearyChatCustomMessage() {
         return bearychatCustomMessage;
     }
 
-    public String getBearychatEndCustomMessage() {
+    public String getBearyChatEndCustomMessage() {
         return bearychatEndCustomMessage;
     }
 
     @DataBoundConstructor
-    public BearychatNotifier(final String teamDomain, final String authToken, final String room, final String buildServerUrl,
+    public BearyChatNotifier(final String teamDomain, final String authToken, final String room, final String buildServerUrl,
                              final String sendAs, final boolean startNotification, final boolean notifyAborted, final boolean notifyFailure,
                              final boolean notifyNotBuilt, final boolean notifySuccess, final boolean notifyUnstable, final boolean notifyBackToNormal,
-                             boolean includeBearychatCustomMessage, String bearychatCustomMessage, String bearychatEndCustomMessage) {
+                             boolean includeBearyChatCustomMessage, String bearychatCustomMessage, String bearychatEndCustomMessage) {
         super();
         this.teamDomain = teamDomain;
         this.authToken = authToken;
@@ -132,7 +132,7 @@ public class BearychatNotifier extends Notifier {
         this.notifySuccess = notifySuccess;
         this.notifyUnstable = notifyUnstable;
         this.notifyBackToNormal = notifyBackToNormal;
-        this.includeBearychatCustomMessage = includeBearychatCustomMessage;
+        this.includeBearyChatCustomMessage = includeBearyChatCustomMessage;
         this.bearychatCustomMessage = bearychatCustomMessage;
         this.bearychatEndCustomMessage = bearychatEndCustomMessage;
     }
@@ -141,7 +141,7 @@ public class BearychatNotifier extends Notifier {
         return BuildStepMonitor.NONE;
     }
 
-    public BearychatService newBearychatService(AbstractBuild r, BuildListener listener) {
+    public BearyChatService newBearyChatService(AbstractBuild r, BuildListener listener) {
         String teamDomain = this.teamDomain;
         if (StringUtils.isEmpty(teamDomain)) {
             teamDomain = getDescriptor().getTeamDomain();
@@ -166,7 +166,7 @@ public class BearychatNotifier extends Notifier {
         authToken = env.expand(authToken);
         room = env.expand(room);
 
-        return new StandardBearychatService(teamDomain, authToken, room);
+        return new StandardBearyChatService(teamDomain, authToken, room);
     }
 
     @Override
@@ -179,9 +179,9 @@ public class BearychatNotifier extends Notifier {
         if (startNotification) {
             Map<Descriptor<Publisher>, Publisher> map = build.getProject().getPublishersList().toMap();
             for (Publisher publisher : map.values()) {
-                if (publisher instanceof BearychatNotifier) {
+                if (publisher instanceof BearyChatNotifier) {
                     logger.info("Invoking Started...");
-                    new ActiveNotifier((BearychatNotifier) publisher, listener).started(build);
+                    new ActiveNotifier((BearyChatNotifier) publisher, listener).started(build);
                 }
             }
         }
@@ -232,7 +232,7 @@ public class BearychatNotifier extends Notifier {
         }
 
         @Override
-        public BearychatNotifier newInstance(StaplerRequest sr, JSONObject json) {
+        public BearyChatNotifier newInstance(StaplerRequest sr, JSONObject json) {
             String teamDomain = sr.getParameter("bearychatTeamDomain");
             String token = sr.getParameter("bearychatToken");
             String room = sr.getParameter("bearychatRoom");
@@ -243,12 +243,12 @@ public class BearychatNotifier extends Notifier {
             boolean notifyUnstable = "true".equals(sr.getParameter("bearychatNotifyUnstable"));
             boolean notifyFailure = "true".equals(sr.getParameter("bearychatNotifyFailure"));
             boolean notifyBackToNormal = "true".equals(sr.getParameter("bearychatNotifyBackToNormal"));
-            boolean includeBearychatCustomMessage = "on".equals(sr.getParameter("includeBearychatCustomMessage"));
+            boolean includeBearyChatCustomMessage = "on".equals(sr.getParameter("includeBearyChatCustomMessage"));
             String bearychatCustomMessage = sr.getParameter("bearychatCustomMessage");
             String bearychatEndCustomMessage = sr.getParameter("bearychatEndCustomMessage");
-            return new BearychatNotifier(teamDomain, token, room, buildServerUrl, sendAs, startNotification, notifyAborted,
+            return new BearyChatNotifier(teamDomain, token, room, buildServerUrl, sendAs, startNotification, notifyAborted,
                     notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal,
-                    includeBearychatCustomMessage, bearychatCustomMessage, bearychatEndCustomMessage);
+                    includeBearyChatCustomMessage, bearychatCustomMessage, bearychatEndCustomMessage);
         }
 
         @Override
@@ -269,8 +269,8 @@ public class BearychatNotifier extends Notifier {
             return super.configure(sr, formData);
         }
 
-        BearychatService getBearychatService(final String teamDomain, final String authToken, final String room) {
-            return new StandardBearychatService(teamDomain, authToken, room);
+        BearyChatService getBearyChatService(final String teamDomain, final String authToken, final String room) {
+            return new StandardBearyChatService(teamDomain, authToken, room);
         }
 
         @Override
@@ -299,9 +299,9 @@ public class BearychatNotifier extends Notifier {
                 if (StringUtils.isEmpty(targetBuildServerUrl)) {
                     targetBuildServerUrl = this.buildServerUrl;
                 }
-                BearychatService testBearychatService = getBearychatService(targetDomain, targetToken, targetRoom);
+                BearyChatService testBearyChatService = getBearyChatService(targetDomain, targetToken, targetRoom);
                 String message = "BearyChat Jenkins Plugin has been configured correctly. " + targetBuildServerUrl;
-                boolean success = testBearychatService.publish("ping", message, "green");
+                boolean success = testBearyChatService.publish("ping", message, "green");
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());

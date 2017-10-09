@@ -37,17 +37,17 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     private static final Logger logger = Logger.getLogger(ActiveNotifier.class.getName());
 
-    BearychatNotifier notifier;
+    BearyChatNotifier notifier;
     BuildListener listener;
 
-    public ActiveNotifier(BearychatNotifier notifier, BuildListener listener) {
+    public ActiveNotifier(BearyChatNotifier notifier, BuildListener listener) {
         super();
         this.notifier = notifier;
         this.listener = listener;
     }
 
-    private BearychatService getBearychat(AbstractBuild r) {
-        return notifier.newBearychatService(r, listener);
+    private BearyChatService getBearyChat(AbstractBuild r) {
+        return notifier.newBearyChatService(r, listener);
     }
 
     public Map<String, Object> getData(AbstractBuild build) {
@@ -88,7 +88,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         jobMap.put("duration", duration);
         jobMap.put("commit_message", commitMessage);
 
-        if(notifier.includeBearychatCustomMessage()) {
+        if(notifier.includeBearyChatCustomMessage()) {
             String customMessage = getCustomMessage(build);
             jobMap.put("custom_message", customMessage);
 
@@ -130,7 +130,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public String getCustomMessage(AbstractBuild build) {
-         String customMessage = notifier.getBearychatCustomMessage();
+         String customMessage = notifier.getBearyChatCustomMessage();
          EnvVars envVars = null;
          try {
              envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
@@ -144,7 +144,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public String getCustomEndMessage(AbstractBuild build) {
-        String customEndMessage = notifier.getBearychatEndCustomMessage();
+        String customEndMessage = notifier.getBearyChatEndCustomMessage();
         EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
@@ -257,7 +257,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.appendDuration();
         message.appendOpenLink();
 
-        if(notifier.includeBearychatCustomMessage()) {
+        if(notifier.includeBearyChatCustomMessage()) {
             message.appendCustomMessage();
         }
 
@@ -299,7 +299,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         Map<String, Object> dataMap = getData(build);
         dataMap.put("message", message);
         dataMap.put("color", color);
-        getBearychat(build).publish(action, dataMap);
+        getBearyChat(build).publish(action, dataMap);
     }
 
     public void finalized(AbstractBuild r) {
@@ -333,7 +333,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             Map<String, Object> dataMap = getData(build);
             dataMap.put("message", message);
             dataMap.put("color", color);
-            getBearychat(build).publish(action, dataMap);
+            getBearyChat(build).publish(action, dataMap);
         }
     }
     // ========== events to notify ========== >>>>
@@ -351,10 +351,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
                                     UNKNOWN_STATUS_MESSAGE = "Unknown";
 
         private StringBuffer message;
-        private BearychatNotifier notifier;
+        private BearyChatNotifier notifier;
         private AbstractBuild build;
 
-        public MessageBuilder(BearychatNotifier notifier, AbstractBuild build) {
+        public MessageBuilder(BearyChatNotifier notifier, AbstractBuild build) {
             this.notifier = notifier;
             this.message = new StringBuffer();
             this.build = build;
@@ -472,7 +472,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         public MessageBuilder appendCustomMessage() {
-            String customMessage = notifier.getBearychatCustomMessage();
+            String customMessage = notifier.getBearyChatCustomMessage();
             EnvVars envVars = new EnvVars();
             try {
                 envVars = build.getEnvironment(new LogTaskListener(logger, INFO));

@@ -1,21 +1,7 @@
 package jenkins.plugins.bearychat.workflow;
 
-//import com.cloudbees.plugins.credentials.common.StandardListBoxModel;
-//import com.cloudbees.plugins.credentials.domains.HostnameRequirement;
-import hudson.AbortException;
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.Project;
-import hudson.model.TaskListener;
-import hudson.security.ACL;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-import jenkins.model.Jenkins;
-import jenkins.plugins.bearychat.Messages;
-import jenkins.plugins.bearychat.BearychatNotifier;
-import jenkins.plugins.bearychat.BearychatService;
-import jenkins.plugins.bearychat.StandardBearychatService;
-//import org.jenkinsci.plugins.plaincredentials.StringCredentials;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -24,16 +10,25 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import hudson.AbortException;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Project;
+import hudson.model.TaskListener;
+import hudson.security.ACL;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-
-//import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
+import jenkins.model.Jenkins;
+import jenkins.plugins.bearychat.Messages;
+import jenkins.plugins.bearychat.BearyChatNotifier;
+import jenkins.plugins.bearychat.BearyChatService;
+import jenkins.plugins.bearychat.StandardBearyChatService;
 
 /**
- * Workflow step to send a Bearychat channel notification.
+ * Workflow step to send a BearyChat channel notification.
  */
-public class BearychatSendStep extends AbstractStepImpl {
+public class BearyChatSendStep extends AbstractStepImpl {
 
     private final @Nonnull String message;
     private String color;
@@ -43,7 +38,6 @@ public class BearychatSendStep extends AbstractStepImpl {
     private String channel;
     private String teamDomain;
     private boolean failOnError;
-
 
     @Nonnull
     public String getMessage() {
@@ -114,7 +108,7 @@ public class BearychatSendStep extends AbstractStepImpl {
     }
 
     @DataBoundConstructor
-    public BearychatSendStep(@Nonnull String message) {
+    public BearyChatSendStep(@Nonnull String message) {
         this.message = message;
     }
 
@@ -122,7 +116,7 @@ public class BearychatSendStep extends AbstractStepImpl {
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
 
         public DescriptorImpl() {
-            super(BearychatSendStepExecution.class);
+            super(BearyChatSendStepExecution.class);
         }
 
         @Override
@@ -132,7 +126,7 @@ public class BearychatSendStep extends AbstractStepImpl {
 
         @Override
         public String getDisplayName() {
-            return Messages.BearychatSendStepDisplayName();
+            return Messages.BearyChatSendStepDisplayName();
         }
 
         //WARN users that they should not use the plain/exposed token, but rather the token credential id
@@ -142,12 +136,12 @@ public class BearychatSendStep extends AbstractStepImpl {
         }
     }
 
-    public static class BearychatSendStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+    public static class BearyChatSendStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
         private static final long serialVersionUID = 1L;
 
         @Inject
-        transient BearychatSendStep step;
+        transient BearyChatSendStep step;
 
         @StepContextParameter
         transient TaskListener listener;
@@ -167,8 +161,8 @@ public class BearychatSendStep extends AbstractStepImpl {
             if (jenkins == null) {
                 return null;
             }
-            BearychatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearychatNotifier.DescriptorImpl.class);
-            listener.getLogger().println("run BearychatSendStep, step " + step.token+":" + step.botUser+", desc ");
+            BearyChatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearyChatNotifier.DescriptorImpl.class);
+            listener.getLogger().println("run BearyChatSendStep, step " + step.token + ":" + step.botUser + ", desc ");
             String team = step.teamDomain != null ? step.teamDomain : bearychatDesc.getTeamDomain();
             //String tokenCredentialId = step.tokenCredentialId != null ? step.tokenCredentialId : bearychatDesc.getTokenCredentialId();
             
@@ -183,9 +177,9 @@ public class BearychatSendStep extends AbstractStepImpl {
             String color = step.color != null ? step.color : "";
 
             //placing in console log to simplify testing of retrieving values from global config or from step field; also used for tests
-            listener.getLogger().println(Messages.BearychatSendStepConfig(step.teamDomain == null, step.token == null, step.channel == null, step.color == null));
+            listener.getLogger().println(Messages.BearyChatSendStepConfig(step.teamDomain == null, step.token == null, step.channel == null, step.color == null));
 
-            BearychatService bearychatService = getBearychatService(team, token, channel);
+            BearyChatService bearychatService = getBearyChatService(team, token, channel);
             boolean publishSuccess = bearychatService.publish(step.message, color);
             if (!publishSuccess && step.failOnError) {
                 throw new AbortException(Messages.NotificationFailed());
@@ -196,8 +190,8 @@ public class BearychatSendStep extends AbstractStepImpl {
         }
         //streamline unit testing
         
-        BearychatService getBearychatService(String team, String token, String channel) {
-            return new StandardBearychatService(team, token, channel);
+        BearyChatService getBearyChatService(String team, String token, String channel) {
+            return new StandardBearyChatService(team, token, channel);
         }
     }
 }
