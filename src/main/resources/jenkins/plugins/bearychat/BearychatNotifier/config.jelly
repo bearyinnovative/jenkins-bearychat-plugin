@@ -47,12 +47,12 @@
             <f:textbox name="bearychatToken" value="${instance.getAuthToken()}"/>
         </f:entry>
 
-        <f:entry title="Project Channel" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatRoom.html">
-            <f:textbox name="bearychatRoom" value="${instance.getRoom()}"/>
+        <f:entry title="Project Channel" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatChannel.html">
+            <f:textbox name="bearychatChannel" value="${instance.getChannel()}"/>
         </f:entry>
 
         <f:validateButton
             title="${%Test Connection}" progress="${%Testing...}"
-            method="testConnection" with="bearychatTeamDomain,bearychatToken,bearychatRoom"/>
+            method="testConnection" with="bearychatTeamDomain,bearychatToken,bearychatChannel"/>
     </f:advanced>
 </j:jelly>

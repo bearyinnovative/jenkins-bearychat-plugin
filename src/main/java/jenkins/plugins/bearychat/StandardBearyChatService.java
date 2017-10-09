@@ -1,37 +1,30 @@
 package jenkins.plugins.bearychat;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.methods.PostMethod;
-
-import org.json.JSONObject;
-import org.json.JSONArray;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import jenkins.model.Jenkins;
-import hudson.ProxyConfiguration;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpStatus;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
+import org.json.JSONObject;
+import hudson.ProxyConfiguration;
+import jenkins.model.Jenkins;
 
 public class StandardBearyChatService implements BearyChatService {
 
     private static final Logger logger = Logger.getLogger(StandardBearyChatService.class.getName());
 
-    private String scheme = "https://";
-    private String host = "bearychat.com";
-    private String teamDomain;
-    private String token;
-    private String room;
+    private String webhook;
+    private String channel;
 
-    public StandardBearyChatService(String teamDomain, String token, String room) {
+    public StandardBearyChatService(String webhook, String channel) {
         super();
-        this.teamDomain = teamDomain;
-        this.token = token;
-        this.room = room;
+
+        this.webhook = webhook;
+        this.channel = channel;
     }
 
     public boolean publish(String message) {
@@ -52,23 +45,22 @@ public class StandardBearyChatService implements BearyChatService {
     public boolean publish(String action, Map<String, Object> dataMap) {
         boolean result = true;
         String url = genPostUrl();
-        logger.info("Posting: to " + room + " on " + teamDomain + " using " + url +": " + dataMap);
+        logger.info("Posting to " + channel + " on " + webhook + ": " + dataMap);
         HttpClient client = getHttpClient();
         PostMethod post = new PostMethod(url);
         JSONObject json = new JSONObject();
 
         try {
-
             JSONObject dataJson = new JSONObject();
 
             String message = "", color = "";
+
             if(dataMap != null && !dataMap.isEmpty()){
                 message = (String)dataMap.get("message");
                 color = (String)dataMap.get("color");
 
                 dataJson.put("authors", dataMap.get("authors"));
                 dataJson.put("files", dataMap.get("files"));
-
 
                 Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
                 if(configMap != null){
@@ -99,9 +91,8 @@ public class StandardBearyChatService implements BearyChatService {
             }
             String data = dataJson.toString();
 
-
             json.put("action", action);
-            json.put("channel", room);
+            json.put("channel", channel);
             json.put("text", message);
             json.put("color", color);
             json.put("data", data);
@@ -130,8 +121,7 @@ public class StandardBearyChatService implements BearyChatService {
     }
 
     public String genPostUrl(){
-        String url = scheme + teamDomain + "." + host + "/api/hooks/jenkins/" + token;
-        return url;
+        return webhook;
     }
 
     protected HttpClient getHttpClient() {
@@ -155,7 +145,4 @@ public class StandardBearyChatService implements BearyChatService {
         return client;
     }
 
-    void setHost(String host) {
-        this.host = host;
-    }
 }

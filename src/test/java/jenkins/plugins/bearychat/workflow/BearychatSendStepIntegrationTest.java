@@ -1,6 +1,5 @@
 package jenkins.plugins.bearychat.workflow;
 
-
 import hudson.model.Result;
 import jenkins.plugins.bearychat.Messages;
 import org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition;
@@ -11,7 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
-public class BearychatSendStepIntegrationTest {
+public class BearyChatSendStepIntegrationTest {
 
     // @Rule
     // public JenkinsRule jenkinsRule = new JenkinsRule();
@@ -19,14 +18,14 @@ public class BearychatSendStepIntegrationTest {
     @Test
     public void configRoundTrip() throws Exception {
         /*
-        BearychatSendStep step1 = new BearychatSendStep("message");
+        BearyChatSendStep step1 = new BearyChatSendStep("message");
         step1.setColor("good");
         step1.setChannel("#channel");
         step1.setToken("token");
         step1.setTeamDomain("teamDomain");
         step1.setFailOnError(true);
 
-        BearychatSendStep step2 = new StepConfigTester(jenkinsRule).configRoundTrip(step1);
+        BearyChatSendStep step2 = new StepConfigTester(jenkinsRule).configRoundTrip(step1);
         jenkinsRule.assertEqualDataBoundBeans(step1, step2);
         */
     }
@@ -39,7 +38,7 @@ public class BearychatSendStepIntegrationTest {
         job.setDefinition(new CpsFlowDefinition("bearychatSend(message: 'message', teamDomain: 'teamDomain', token: 'token', channel: '#channel', color: 'good');", true));
         WorkflowRun run = jenkinsRule.assertBuildStatusSuccess(job.scheduleBuild2(0).get());
         //everything should come from step configuration
-        jenkinsRule.assertLogContains(Messages.BearychatSendStepConfig(false, false, false, false), run);
+        jenkinsRule.assertLogContains(Messages.BearyChatSendStepConfig(false, false, false, false), run);
         */
     }
 

@@ -1,5 +1,8 @@
 package jenkins.plugins.bearychat;
 
+import java.util.Map;
+import java.util.logging.Logger;
+
 import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -8,9 +11,6 @@ import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.model.listeners.RunListener;
 import hudson.tasks.Publisher;
-
-import java.util.Map;
-import java.util.logging.Logger;
 
 @Extension
 @SuppressWarnings("rawtypes")

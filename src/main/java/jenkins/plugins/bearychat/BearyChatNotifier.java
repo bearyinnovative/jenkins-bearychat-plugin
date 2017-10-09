@@ -1,5 +1,9 @@
 package jenkins.plugins.bearychat;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.logging.Logger;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -19,18 +23,13 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.logging.Logger;
-
 public class BearyChatNotifier extends Notifier {
 
     private static final Logger logger = Logger.getLogger(BearyChatNotifier.class.getName());
 
-    private String teamDomain;
-    private String authToken;
+    private String webhook;
     private String buildServerUrl;
-    private String room;
+    private String channel;
     private String sendAs;
     private boolean startNotification;
     private boolean notifySuccess;
@@ -49,16 +48,12 @@ public class BearyChatNotifier extends Notifier {
         return (DescriptorImpl) super.getDescriptor();
     }
 
-    public String getTeamDomain() {
-        return teamDomain;
+    public String getWebhook() {
+        return webhook;
     }
 
-    public String getRoom() {
-        return room;
-    }
-
-    public String getAuthToken() {
-        return authToken;
+    public String getChannel() {
+        return channel;
     }
 
     public String getBuildServerUrl() {
@@ -115,15 +110,14 @@ public class BearyChatNotifier extends Notifier {
     }
 
     @DataBoundConstructor
-    public BearyChatNotifier(final String teamDomain, final String authToken, final String room, final String buildServerUrl,
+    public BearyChatNotifier(final String webhook, final String channel, final String buildServerUrl,
                              final String sendAs, final boolean startNotification, final boolean notifyAborted, final boolean notifyFailure,
                              final boolean notifyNotBuilt, final boolean notifySuccess, final boolean notifyUnstable, final boolean notifyBackToNormal,
                              boolean includeBearyChatCustomMessage, String bearychatCustomMessage, String bearychatEndCustomMessage) {
         super();
-        this.teamDomain = teamDomain;
-        this.authToken = authToken;
+        this.webhook = webhook;
         this.buildServerUrl = buildServerUrl;
-        this.room = room;
+        this.channel = channel;
         this.sendAs = sendAs;
         this.startNotification = startNotification;
         this.notifyAborted = notifyAborted;
@@ -142,17 +136,14 @@ public class BearyChatNotifier extends Notifier {
     }
 
     public BearyChatService newBearyChatService(AbstractBuild r, BuildListener listener) {
-        String teamDomain = this.teamDomain;
-        if (StringUtils.isEmpty(teamDomain)) {
-            teamDomain = getDescriptor().getTeamDomain();
+        String webhook = this.webhook;
+        if (StringUtils.isEmpty(webhook)) {
+            webhook = getDescriptor().getWebhook();
         }
-        String authToken = this.authToken;
-        if (StringUtils.isEmpty(authToken)) {
-            authToken = getDescriptor().getToken();
-        }
-        String room = this.room;
-        if (StringUtils.isEmpty(room)) {
-            room = getDescriptor().getRoom();
+
+        String channel = this.channel;
+        if (StringUtils.isEmpty(channel)) {
+            channel = getDescriptor().getChannel();
         }
 
         EnvVars env = null;
@@ -162,11 +153,10 @@ public class BearyChatNotifier extends Notifier {
             listener.getLogger().println("Error retrieving environment vars: " + e.getMessage());
             env = new EnvVars();
         }
-        teamDomain = env.expand(teamDomain);
-        authToken = env.expand(authToken);
-        room = env.expand(room);
+        webhook = env.expand(webhook);
+        channel = env.expand(channel);
 
-        return new StandardBearyChatService(teamDomain, authToken, room);
+        return new StandardBearyChatService(webhook, channel);
     }
 
     @Override
@@ -191,9 +181,8 @@ public class BearyChatNotifier extends Notifier {
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        private String teamDomain;
-        private String token;
-        private String room;
+        private String webhook;
+        private String channel;
         private String buildServerUrl;
         private String sendAs;
 
@@ -201,16 +190,12 @@ public class BearyChatNotifier extends Notifier {
             load();
         }
 
-        public String getTeamDomain() {
-            return teamDomain;
+        public String getWebhook() {
+            return webhook;
         }
 
-        public String getToken() {
-            return token;
-        }
-
-        public String getRoom() {
-            return room;
+        public String getChannel() {
+            return channel;
         }
 
         public String getBuildServerUrl() {
@@ -233,9 +218,8 @@ public class BearyChatNotifier extends Notifier {
 
         @Override
         public BearyChatNotifier newInstance(StaplerRequest sr, JSONObject json) {
-            String teamDomain = sr.getParameter("bearychatTeamDomain");
-            String token = sr.getParameter("bearychatToken");
-            String room = sr.getParameter("bearychatRoom");
+            String webhook = sr.getParameter("bearychatWebhook");
+            String channel = sr.getParameter("bearychatChannel");
             boolean startNotification = "true".equals(sr.getParameter("bearychatStartNotification"));
             boolean notifySuccess = "true".equals(sr.getParameter("bearychatNotifySuccess"));
             boolean notifyAborted = "true".equals(sr.getParameter("bearychatNotifyAborted"));
@@ -246,16 +230,15 @@ public class BearyChatNotifier extends Notifier {
             boolean includeBearyChatCustomMessage = "on".equals(sr.getParameter("includeBearyChatCustomMessage"));
             String bearychatCustomMessage = sr.getParameter("bearychatCustomMessage");
             String bearychatEndCustomMessage = sr.getParameter("bearychatEndCustomMessage");
-            return new BearyChatNotifier(teamDomain, token, room, buildServerUrl, sendAs, startNotification, notifyAborted,
+            return new BearyChatNotifier(webhook, channel, buildServerUrl, sendAs, startNotification, notifyAborted,
                     notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal,
                     includeBearyChatCustomMessage, bearychatCustomMessage, bearychatEndCustomMessage);
         }
 
         @Override
         public boolean configure(StaplerRequest sr, JSONObject formData) throws FormException {
-            teamDomain = sr.getParameter("bearychatTeamDomain");
-            token = sr.getParameter("bearychatToken");
-            room = sr.getParameter("bearychatRoom");
+            webhook = sr.getParameter("bearychatWebhook");
+            channel = sr.getParameter("bearychatChannel");
             buildServerUrl = sr.getParameter("bearychatBuildServerUrl");
             sendAs = sr.getParameter("bearychatSendAs");
             if(StringUtils.isEmpty(buildServerUrl)) {
@@ -269,8 +252,8 @@ public class BearyChatNotifier extends Notifier {
             return super.configure(sr, formData);
         }
 
-        BearyChatService getBearyChatService(final String teamDomain, final String authToken, final String room) {
-            return new StandardBearyChatService(teamDomain, authToken, room);
+        BearyChatService getBearyChatService(final String webhoo, final String channel) {
+            return new StandardBearyChatService(webhook, channel);
         }
 
         @Override
@@ -278,28 +261,23 @@ public class BearyChatNotifier extends Notifier {
             return "BearyChat Notifications";
         }
 
-        public FormValidation doTestConnection(@QueryParameter("bearychatTeamDomain") final String teamDomain,
-                                               @QueryParameter("bearychatToken") final String authToken,
-                                               @QueryParameter("bearychatRoom") final String room,
+        public FormValidation doTestConnection(@QueryParameter("bearychatWebhook") final String webhook,
+                                               @QueryParameter("bearychatChannel") final String channel,
                                                @QueryParameter("bearychatBuildServerUrl") final String buildServerUrl) throws FormException {
             try {
-                String targetDomain = teamDomain;
-                if (StringUtils.isEmpty(targetDomain)) {
-                    targetDomain = this.teamDomain;
+                String targetWebhook = webhook;
+                if (StringUtils.isEmpty(webhook)) {
+                    targetWebhook = this.webhook;
                 }
-                String targetToken = authToken;
-                if (StringUtils.isEmpty(targetToken)) {
-                    targetToken = this.token;
-                }
-                String targetRoom = room;
-                if (StringUtils.isEmpty(targetRoom)) {
-                    targetRoom = this.room;
+                String targetChannel = channel;
+                if (StringUtils.isEmpty(targetChannel)) {
+                    targetChannel = this.channel;
                 }
                 String targetBuildServerUrl = buildServerUrl;
                 if (StringUtils.isEmpty(targetBuildServerUrl)) {
                     targetBuildServerUrl = this.buildServerUrl;
                 }
-                BearyChatService testBearyChatService = getBearyChatService(targetDomain, targetToken, targetRoom);
+                BearyChatService testBearyChatService = getBearyChatService(targetWebhook, targetChannel);
                 String message = "BearyChat Jenkins Plugin has been configured correctly. " + targetBuildServerUrl;
                 boolean success = testBearyChatService.publish("ping", message, "green");
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");

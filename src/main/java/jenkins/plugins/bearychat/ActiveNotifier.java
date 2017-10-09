@@ -1,23 +1,5 @@
 package jenkins.plugins.bearychat;
 
-import hudson.EnvVars;
-import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BallColor;
-import hudson.model.BuildListener;
-import hudson.model.Cause;
-import hudson.model.CauseAction;
-import hudson.model.Hudson;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.scm.ChangeLogSet;
-import hudson.scm.ChangeLogSet.AffectedFile;
-import hudson.scm.ChangeLogSet.Entry;
-import hudson.util.LogTaskListener;
-
-import org.apache.commons.lang.StringUtils;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +12,20 @@ import java.util.logging.Logger;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 
-import jenkins.model.JenkinsLocationConfiguration;
+import hudson.EnvVars;
+import hudson.Util;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.Cause;
+import hudson.model.Hudson;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.scm.ChangeLogSet;
+import hudson.scm.ChangeLogSet.AffectedFile;
+import hudson.scm.ChangeLogSet.Entry;
+import hudson.util.LogTaskListener;
+import org.apache.commons.lang.StringUtils;
 
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
@@ -56,7 +51,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
         Map<String, String> configMap = new HashMap<String, String>();
         configMap.put("config_url", configUrl);
 
-
         AbstractProject<?, ?> project = build.getProject();
         String projectName = project.getName();
         String projectAbsoluteUrl = project.getAbsoluteUrl();
@@ -68,8 +62,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
         projectMap.put("full_name", projectFullName);
         projectMap.put("display_name", projectDisplayName);
         projectMap.put("absolute_url", projectAbsoluteUrl);
-
-
 
         String id = build.getId();
         int number = build.getNumber();
@@ -96,8 +88,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
             jobMap.put("custom_end_message", customEndMessage);
         }
 
-
-
         ChangeLogSet changeSet = build.getChangeSet();
         List<Entry> entries = new LinkedList<Entry>();
         Set<AffectedFile> files = new HashSet<AffectedFile>();
@@ -107,8 +97,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             files.addAll(entry.getAffectedFiles());
         }
 
-
-        String nonsense= "remotenonsense";
+        String nonsense = "remotenonsense";
         Set<String> authors = new HashSet<String>();
         for (Entry entry : entries) {
             String displayName = entry.getAuthor().getDisplayName();
