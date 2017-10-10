@@ -12,18 +12,18 @@
     tags they use. Views are always organized according to its owner class,
     so it should be straightforward to find them.
   -->
-<f:section title="Global BearyChat Notifier Settings" name="bearychat">
+<f:section title="${%BearyChatSetting}" name="bearychat">
     <f:entry title="Webhook URL " help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatWebhook.html">
-        <f:textbox field="webhook" name="bearychatWebhook" value="${descriptor.getWebhook()}" />
+        <f:textbox field="webhook" name="webhook" value="${descriptor.getWebhook()}" />
     </f:entry>
-    <f:entry title="Channel" help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatChannel.html">
-        <f:textbox field="channel" name="bearychatChannel" value="${descriptor.getChannel()}" />
+    <f:entry title="${%Channel}" help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatChannel.html">
+        <f:textbox field="channel" name="channel" value="${descriptor.getChannel()}" />
     </f:entry>
-    <f:entry title="Build Server URL" help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatBuildServerUrl.html">
-        <f:textbox field="buildServerUrl" name="bearychatBuildServerUrl" value="${descriptor.getBuildServerUrl()}" />
+    <f:entry title="${%BuildServerURL}" help="${rootURL}/plugin/bearychat/help-globalConfig-bearychatBuildServerUrl.html">
+        <f:textbox field="buildServerUrl" name="buildServerUrl" value="${descriptor.getBuildServerUrl()}" />
     </f:entry>
     <f:validateButton
-        title="${%Test Connection}" progress="${%Testing...}"
-        method="testConnection" with="bearychatTeamDomain,bearychatToken,bearychatChannel,bearychatBuildServerUrl" />
+        title="${%TestConnection}" progress="${%Testing}..."
+        method="testConnection" with="webhook,channel,buildServerUrl" />
   </f:section>
 </j:jelly>
