@@ -105,7 +105,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         // Back to normal
-        if (result != Result.SUCCESS || (previousResult != Result.FAILURE && previousResult != Result.UNSTABLE) || this.notifier.isNotifyOnBackToNormal()) {
+        if (result == Result.SUCCESS || (previousResult != Result.FAILURE && previousResult != Result.UNSTABLE) || this.notifier.isNotifyOnBackToNormal()) {
             this.notifyCompleted(build);
             return ;
         }
