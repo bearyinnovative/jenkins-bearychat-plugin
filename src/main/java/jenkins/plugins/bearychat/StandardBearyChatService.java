@@ -1,7 +1,5 @@
 package jenkins.plugins.bearychat;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.httpclient.HttpClient;
@@ -9,13 +7,16 @@ import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
-import org.json.JSONObject;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import hudson.ProxyConfiguration;
 import jenkins.model.Jenkins;
 
 public class StandardBearyChatService implements BearyChatService {
 
     private static final Logger logger = Logger.getLogger(StandardBearyChatService.class.getName());
+
+    public static String VERSION = "3.0";
 
     private String webhook;
     private String channel;
@@ -27,82 +28,66 @@ public class StandardBearyChatService implements BearyChatService {
         this.channel = channel;
     }
 
+    public JSONObject genAttachment(String title, String text, String color, String url) {
+        JSONObject attachment = new JSONObject();
+        if (title != null) {
+            attachment.put("title", title);
+        }
+        if (text != null) {
+            attachment.put("text", text);
+        }
+        if (color != null) {
+            attachment.put("color", color);
+        }
+        if (url != null) {
+            attachment.put("url", url);
+        }
+        return attachment;
+    }
+
     public boolean publish(String message) {
-        return publish(message, "green");
+        JSONObject data = new JSONObject();
+        data.put("text", message);
+        return publish(data);
     }
 
-    public boolean publish(String message, String color) {
-        return publish("unknown", message, color);
+    public boolean publish(String message, String text, String fallback, String color) {
+        JSONObject attachment = this.genAttachment(null, text, color, null);
+        JSONArray attachments = new JSONArray();
+        attachments.add(attachment);
+        return publish(message, attachments, fallback);
     }
 
-    public boolean publish(String action, String message, String color) {
-        Map<String, Object> dataMap = new HashMap<String, Object>();
-        dataMap.put("message", message);
-        dataMap.put("color", color);
-        return publish(action, dataMap);
+    public boolean publish(String message, JSONArray attachments, String fallback) {
+        JSONObject data = new JSONObject();
+        if (fallback != null) {
+            data.put("fallback", fallback);
+        }
+        data.put("text", message);
+        data.put("attachments", attachments);
+        return publish(data);
     }
 
-    public boolean publish(String action, Map<String, Object> dataMap) {
+    public boolean publish(JSONObject data) {
         boolean result = true;
-        String url = genPostUrl();
-        logger.info("Posting to " + channel + " on " + webhook + ": " + dataMap);
+        String url = getPostUrl();
+        logger.info("Post to " + channel + " on " + url + ": " + data);
         HttpClient client = getHttpClient();
         PostMethod post = new PostMethod(url);
-        JSONObject json = new JSONObject();
+
+        if (this.channel != null) {
+            data.put("channel", this.channel);
+        }
 
         try {
-            JSONObject dataJson = new JSONObject();
-
-            String message = "", color = "";
-
-            if(dataMap != null && !dataMap.isEmpty()){
-                message = (String)dataMap.get("message");
-                color = (String)dataMap.get("color");
-
-                dataJson.put("authors", dataMap.get("authors"));
-                dataJson.put("files", dataMap.get("files"));
-
-                Map<String,String> configMap = (Map<String,String>)dataMap.get("config");
-                if(configMap != null){
-                    JSONObject configJson = new JSONObject();
-                    for(Map.Entry<String, String> entry : configMap.entrySet()){
-                        configJson.put(entry.getKey(), entry.getValue());
-                    }
-                    dataJson.put("config", configJson);
-                }
-
-                Map<String,String> projectMap = (Map<String,String>)dataMap.get("project");
-                if(projectMap != null){
-                    JSONObject projectJson = new JSONObject();
-                    for(Map.Entry<String, String> entry : projectMap.entrySet()){
-                        projectJson.put(entry.getKey(), entry.getValue());
-                    }
-                    dataJson.put("project", projectJson);
-                }
-
-                Map<String,String> jobMap = (Map<String,String>)dataMap.get("job");
-                if(jobMap != null){
-                    JSONObject jobJson = new JSONObject();
-                    for(Map.Entry<String, String> entry : jobMap.entrySet()){
-                        jobJson.put(entry.getKey(), entry.getValue());
-                    }
-                    dataJson.put("job", jobJson);
-                }
-            }
-            String data = dataJson.toString();
-
-            json.put("action", action);
-            json.put("channel", channel);
-            json.put("text", message);
-            json.put("color", color);
-            json.put("data", data);
-
-            post.addParameter("payload", json.toString());
+            post.addRequestHeader("X-JENKINS-VERSION", Jenkins.VERSION);
+            post.addRequestHeader("X-PLUGIN-VERSION", VERSION);
+            post.addParameter("payload", data.toString());
             post.getParams().setContentCharset("UTF-8");
 
             int responseCode = client.executeMethod(post);
             String response = post.getResponseBodyAsString();
-            if(responseCode != HttpStatus.SC_OK) {
+            if (responseCode != HttpStatus.SC_OK) {
                 logger.log(Level.WARNING, "BearyChat post may have failed. Response: " + response);
                 result = false;
             } else {
@@ -117,11 +102,13 @@ public class StandardBearyChatService implements BearyChatService {
         } finally {
             post.releaseConnection();
         }
+
         return result;
     }
 
-    public String genPostUrl(){
-        return webhook;
+    public String getPostUrl() {
+        // Adding version in QueryString for statistic.
+        return webhook + "?v=" + VERSION;
     }
 
     protected HttpClient getHttpClient() {

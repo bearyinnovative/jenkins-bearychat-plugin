@@ -2,6 +2,8 @@ package jenkins.plugins.bearychat.workflow;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+
+import net.sf.json.JSONArray;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -12,28 +14,68 @@ import hudson.AbortException;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.TaskListener;
+import net.sf.json.JSONObject;
 
 import jenkins.model.Jenkins;
 import jenkins.plugins.bearychat.Messages;
 import jenkins.plugins.bearychat.BearyChatNotifier;
 import jenkins.plugins.bearychat.BearyChatService;
 import jenkins.plugins.bearychat.StandardBearyChatService;
+import jenkins.plugins.bearychat.Helper;
 
 /**
  * Workflow step to send a BearyChat channel notification.
  */
 public class BearyChatSendStep extends AbstractStepImpl {
 
-    private final @Nonnull String message;
+    private String message;
+    private String notification;
+    private String title;
+    private String url;
+    private String attachmentText;
     private String color;
-    private boolean botUser;
     private String channel;
     private String webhook;
     private boolean failOnError;
 
-    @Nonnull
     public String getMessage() {
         return message;
+    }
+
+    public String getAttachmentText() {
+        return attachmentText;
+    }
+
+    @DataBoundSetter
+    public void setAttachmentText(String text) {
+        this.attachmentText = Util.fixEmpty(text);
+    }
+
+    public String getTitle() {
+        return this.title;
+    }
+
+    public String getNotification() {
+        return this.notification;
+    }
+
+    @DataBoundSetter
+    public void setNotification(String notification) {
+        this.notification = notification;
+    }
+
+    @DataBoundSetter
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    @DataBoundSetter
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public String getColor() {
@@ -52,15 +94,6 @@ public class BearyChatSendStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setWebhook(String webhook) {
         this.webhook = Util.fixEmpty(webhook);
-    }
-
-    public boolean getBotUser() {
-        return botUser;
-    }
-
-    @DataBoundSetter
-    public void setBotUser(boolean botUser) {
-        this.botUser = botUser;
     }
 
     public String getChannel() {
@@ -114,6 +147,42 @@ public class BearyChatSendStep extends AbstractStepImpl {
         @StepContextParameter
         transient TaskListener listener;
 
+        protected JSONObject buildData (String message, String title, String attachmenText, String notification, String url, String color) {
+            JSONObject data = new JSONObject();
+            JSONObject attachment = new JSONObject();
+            JSONArray attachments = new JSONArray();
+
+            if (title != null) {
+                attachment.put("title", title);
+            }
+
+            if (attachmenText != null) {
+                attachment.put("text", attachmenText);
+            }
+
+            if (color != null) {
+                attachment.put("color", color);
+            }
+
+            if (url != null) {
+                attachment.put("url", url);
+            }
+
+            attachments.add(attachment);
+
+            if (message != null) {
+                data.put("text", message);
+            }
+
+            if (notification != null) {
+                data.put("fallback", notification);
+            }
+
+            data.put("attachments", attachments);
+
+            return data;
+        }
+
         @Override
         protected Void run() throws Exception {
 
@@ -129,18 +198,26 @@ public class BearyChatSendStep extends AbstractStepImpl {
             if (jenkins == null) {
                 return null;
             }
-            BearyChatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearyChatNotifier.DescriptorImpl.class);
-            listener.getLogger().println("run BearyChatSendStep, step " + step.webhook + " : " + step.botUser + ", desc ");
-            String webhook = step.webhook != null ? step.webhook : bearychatDesc.getWebhook();
-            String channel = step.channel != null ? step.channel : bearychatDesc.getChannel();
-            String color = step.color != null ? step.color : "";
 
-            // placing in console log to simplify testing of retrieving values from global config or from step field; also used for tests
-            listener.getLogger().println(Messages.BearyChatSendStepConfig(step.webhook == null, step.channel == null, step.color == null));
+            BearyChatNotifier.DescriptorImpl bearychatDesc = jenkins.getDescriptorByType(BearyChatNotifier.DescriptorImpl.class);
+            String webhook = step.getWebhook() != null ? step.getWebhook() : bearychatDesc.getWebhook();
+            String channel = step.getChannel() != null ? step.getChannel() : bearychatDesc.getChannel();
+            String color = step.getColor() != null ? step.getColor() : Helper.COLOR_GREY;
+            String message = step.getMessage();
+            String url = step.getUrl();
+            String title = step.getTitle();
+            String notifition = step.getNotification();
+            String attachmentText = step.getAttachmentText();
+            Boolean failOnError = step.isFailOnError();
+
+            JSONObject data = buildData(message, title, attachmentText, notifition, url, color);
+
+            listener.getLogger().println(Messages.BearyChatSendStepConfig(webhook, channel));
 
             BearyChatService bearychatService = getBearyChatService(webhook, channel);
-            boolean publishSuccess = bearychatService.publish("workflow", step.message, color);
-            if (!publishSuccess && step.failOnError) {
+            boolean publishSuccess = bearychatService.publish(data);
+
+            if (!publishSuccess && failOnError) {
                 throw new AbortException(Messages.NotificationFailed());
             } else if (!publishSuccess) {
                 listener.error(Messages.NotificationFailed());

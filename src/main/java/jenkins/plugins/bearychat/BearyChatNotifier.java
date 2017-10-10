@@ -30,18 +30,17 @@ public class BearyChatNotifier extends Notifier {
     private String webhook;
     private String buildServerUrl;
     private String channel;
-    private String sendAs;
-    private boolean startNotification;
-    private boolean notifySuccess;
-    private boolean notifyAborted;
-    private boolean notifyNotBuilt;
-    private boolean notifyUnstable;
-    private boolean notifyFailure;
-    private boolean notifyBackToNormal;
-    private boolean notifyRepeatedFailure;
-    private boolean includeBearyChatCustomMessage;
-    private String bearychatCustomMessage;
-    private String bearychatEndCustomMessage;
+    private String customStartMessage;
+    private String customEndMessage;
+    private boolean isNotifyOnStarting;
+    private boolean isNotifyOnSuccess;
+    private boolean isNotifyOnAborted;
+    private boolean isNotifyOnNotBuilt;
+    private boolean isNotifyOnUnstable;
+    private boolean isNotifyOnFailure;
+    private boolean isNotifyOnBackToNormal;
+    private boolean isNotifyRepeatedFailure;
+    private boolean isIncludeCustomMessage;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -65,70 +64,66 @@ public class BearyChatNotifier extends Notifier {
         }
     }
 
-    public String getSendAs() {
-        return sendAs;
+    public boolean isNotifyOnStarting() {
+        return this.isNotifyOnStarting;
     }
 
-    public boolean getStartNotification() {
-        return startNotification;
+    public boolean isNotifyOnSuccess() {
+        return this.isNotifyOnSuccess;
     }
 
-    public boolean getNotifySuccess() {
-        return notifySuccess;
+    public boolean isNotifyOnAborted() {
+        return this.isNotifyOnAborted;
     }
 
-    public boolean getNotifyAborted() {
-        return notifyAborted;
+    public boolean isNotifyOnFailure() {
+        return this.isNotifyOnFailure;
     }
 
-    public boolean getNotifyFailure() {
-        return notifyFailure;
+    public boolean isNotifyOnNotBuilt() {
+        return this.isNotifyOnNotBuilt;
     }
 
-    public boolean getNotifyNotBuilt() {
-        return notifyNotBuilt;
+    public boolean isNotifyOnUnstable() {
+        return this.isNotifyOnUnstable;
     }
 
-    public boolean getNotifyUnstable() {
-        return notifyUnstable;
+    public boolean isNotifyOnBackToNormal() {
+        return this.isNotifyOnBackToNormal;
     }
 
-    public boolean getNotifyBackToNormal() {
-        return notifyBackToNormal;
+    public boolean isIncludeCustomMessage() {
+        return this.isIncludeCustomMessage;
     }
 
-    public boolean includeBearyChatCustomMessage() {
-        return includeBearyChatCustomMessage;
+    public String getCustomStartMessage() {
+        return customStartMessage;
     }
 
-    public String getBearyChatCustomMessage() {
-        return bearychatCustomMessage;
-    }
-
-    public String getBearyChatEndCustomMessage() {
-        return bearychatEndCustomMessage;
+    public String getCustomEndMessage() {
+        return customEndMessage;
     }
 
     @DataBoundConstructor
     public BearyChatNotifier(final String webhook, final String channel, final String buildServerUrl,
-                             final String sendAs, final boolean startNotification, final boolean notifyAborted, final boolean notifyFailure,
-                             final boolean notifyNotBuilt, final boolean notifySuccess, final boolean notifyUnstable, final boolean notifyBackToNormal,
-                             boolean includeBearyChatCustomMessage, String bearychatCustomMessage, String bearychatEndCustomMessage) {
+                             final boolean isNotifyOnStarting, final boolean isNotifyOnAborted, final boolean isNotifyOnFailure,
+                             final boolean isNotifyOnNotBuilt, final boolean isNotifyOnSuccess, final boolean isNotifyOnUnstable,
+                             final boolean isNotifyOnBackToNormal, boolean isIncludeCustomMessage,
+                             String customStartMessage, String customEndMessage) {
         super();
         this.webhook = webhook;
         this.buildServerUrl = buildServerUrl;
         this.channel = channel;
-        this.sendAs = sendAs;
-        this.startNotification = startNotification;
-        this.notifyAborted = notifyAborted;
-        this.notifyFailure = notifyFailure;
-        this.notifyNotBuilt = notifyNotBuilt;
-        this.notifySuccess = notifySuccess;
-        this.notifyUnstable = notifyUnstable;
-        this.notifyBackToNormal = notifyBackToNormal;
-        this.includeBearyChatCustomMessage = includeBearyChatCustomMessage;
-        this.bearychatCustomMessage = bearychatCustomMessage;
-        this.bearychatEndCustomMessage = bearychatEndCustomMessage;
+        this.isNotifyOnStarting = isNotifyOnStarting;
+        this.isNotifyOnAborted = isNotifyOnAborted;
+        this.isNotifyOnFailure = isNotifyOnFailure;
+        this.isNotifyOnNotBuilt = isNotifyOnNotBuilt;
+        this.isNotifyOnSuccess = isNotifyOnSuccess;
+        this.isNotifyOnUnstable = isNotifyOnUnstable;
+        this.isNotifyOnBackToNormal = isNotifyOnBackToNormal;
+        this.isIncludeCustomMessage = isIncludeCustomMessage;
+        this.customStartMessage = customStartMessage;
+        this.customEndMessage = customEndMessage;
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
@@ -156,6 +151,7 @@ public class BearyChatNotifier extends Notifier {
         webhook = env.expand(webhook);
         channel = env.expand(channel);
 
+        logger.info("webhook: " + webhook);
         return new StandardBearyChatService(webhook, channel);
     }
 
@@ -166,7 +162,7 @@ public class BearyChatNotifier extends Notifier {
 
     @Override
     public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
-        if (startNotification) {
+        if (isNotifyOnStarting) {
             Map<Descriptor<Publisher>, Publisher> map = build.getProject().getPublishersList().toMap();
             for (Publisher publisher : map.values()) {
                 if (publisher instanceof BearyChatNotifier) {
@@ -184,7 +180,6 @@ public class BearyChatNotifier extends Notifier {
         private String webhook;
         private String channel;
         private String buildServerUrl;
-        private String sendAs;
 
         public DescriptorImpl() {
             load();
@@ -208,39 +203,34 @@ public class BearyChatNotifier extends Notifier {
             }
         }
 
-        public String getSendAs() {
-            return sendAs;
-        }
-
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             return true;
         }
 
         @Override
         public BearyChatNotifier newInstance(StaplerRequest sr, JSONObject json) {
-            String webhook = sr.getParameter("bearychatWebhook");
-            String channel = sr.getParameter("bearychatChannel");
-            boolean startNotification = "true".equals(sr.getParameter("bearychatStartNotification"));
-            boolean notifySuccess = "true".equals(sr.getParameter("bearychatNotifySuccess"));
-            boolean notifyAborted = "true".equals(sr.getParameter("bearychatNotifyAborted"));
-            boolean notifyNotBuilt = "true".equals(sr.getParameter("bearychatNotifyNotBuilt"));
-            boolean notifyUnstable = "true".equals(sr.getParameter("bearychatNotifyUnstable"));
-            boolean notifyFailure = "true".equals(sr.getParameter("bearychatNotifyFailure"));
-            boolean notifyBackToNormal = "true".equals(sr.getParameter("bearychatNotifyBackToNormal"));
-            boolean includeBearyChatCustomMessage = "on".equals(sr.getParameter("includeBearyChatCustomMessage"));
-            String bearychatCustomMessage = sr.getParameter("bearychatCustomMessage");
-            String bearychatEndCustomMessage = sr.getParameter("bearychatEndCustomMessage");
-            return new BearyChatNotifier(webhook, channel, buildServerUrl, sendAs, startNotification, notifyAborted,
-                    notifyFailure, notifyNotBuilt, notifySuccess, notifyUnstable, notifyBackToNormal,
-                    includeBearyChatCustomMessage, bearychatCustomMessage, bearychatEndCustomMessage);
+            String webhook = sr.getParameter("webhook");
+            String channel = sr.getParameter("channel");
+            boolean isNotifyOnStarting = "true".equals(sr.getParameter("isNotifyOnStarting"));
+            boolean isNotifyOnSuccess = "true".equals(sr.getParameter("isNotifyOnSuccess"));
+            boolean isNotifyOnAborted = "true".equals(sr.getParameter("isNotifyOnAborted"));
+            boolean isNotifyOnNotBuilt = "true".equals(sr.getParameter("isNotifyOnNotBuilt"));
+            boolean isNotifyOnUnstable = "true".equals(sr.getParameter("isNotifyOnUnstable"));
+            boolean isNotifyOnFailure = "true".equals(sr.getParameter("isNotifyOnFailure"));
+            boolean isNotifyOnBackToNormal = "true".equals(sr.getParameter("isNotifyOnBackToNormal"));
+            boolean isIncludeCustomMessage = "on".equals(sr.getParameter("isIncludeCustomMessage"));
+            String customStartMessage = sr.getParameter("customStartMessage");
+            String customEndMessage = sr.getParameter("customEndMessage");
+            return new BearyChatNotifier(webhook, channel, buildServerUrl, isNotifyOnStarting, isNotifyOnAborted,
+                    isNotifyOnFailure, isNotifyOnNotBuilt, isNotifyOnSuccess, isNotifyOnUnstable, isNotifyOnBackToNormal,
+                    isIncludeCustomMessage, customStartMessage, customEndMessage);
         }
 
         @Override
         public boolean configure(StaplerRequest sr, JSONObject formData) throws FormException {
-            webhook = sr.getParameter("bearychatWebhook");
-            channel = sr.getParameter("bearychatChannel");
-            buildServerUrl = sr.getParameter("bearychatBuildServerUrl");
-            sendAs = sr.getParameter("bearychatSendAs");
+            webhook = sr.getParameter("webhook");
+            channel = sr.getParameter("channel");
+            buildServerUrl = sr.getParameter("buildServerUrl");
             if(StringUtils.isEmpty(buildServerUrl)) {
                 JenkinsLocationConfiguration jenkinsConfig = new JenkinsLocationConfiguration();
                 buildServerUrl = jenkinsConfig.getUrl();
@@ -252,7 +242,7 @@ public class BearyChatNotifier extends Notifier {
             return super.configure(sr, formData);
         }
 
-        BearyChatService getBearyChatService(final String webhoo, final String channel) {
+        BearyChatService getBearyChatService(final String webhook, final String channel) {
             return new StandardBearyChatService(webhook, channel);
         }
 
@@ -261,9 +251,9 @@ public class BearyChatNotifier extends Notifier {
             return "BearyChat Notifications";
         }
 
-        public FormValidation doTestConnection(@QueryParameter("bearychatWebhook") final String webhook,
-                                               @QueryParameter("bearychatChannel") final String channel,
-                                               @QueryParameter("bearychatBuildServerUrl") final String buildServerUrl) throws FormException {
+        public FormValidation doTestConnection(@QueryParameter("webhook") final String webhook,
+                                               @QueryParameter("channel") final String channel,
+                                               @QueryParameter("buildServerUrl") final String buildServerUrl) throws FormException {
             try {
                 String targetWebhook = webhook;
                 if (StringUtils.isEmpty(webhook)) {
@@ -279,7 +269,7 @@ public class BearyChatNotifier extends Notifier {
                 }
                 BearyChatService testBearyChatService = getBearyChatService(targetWebhook, targetChannel);
                 String message = "BearyChat Jenkins Plugin has been configured correctly. " + targetBuildServerUrl;
-                boolean success = testBearyChatService.publish("ping", message, "green");
+                boolean success = testBearyChatService.publish(message);
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());

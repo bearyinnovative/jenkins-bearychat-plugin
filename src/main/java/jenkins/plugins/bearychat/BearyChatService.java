@@ -1,13 +1,14 @@
 package jenkins.plugins.bearychat;
 
-import java.util.Map;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 public interface BearyChatService {
     boolean publish(String message);
 
-    boolean publish(String message, String color);
+    boolean publish(String message, String text, String fallback, String color);
 
-    boolean publish(String action, String message, String color);
+    boolean publish(String message, JSONArray attachments, String fallback);
 
-    boolean publish(String action, Map<String, Object> dataMap);
+    boolean publish(JSONObject data);
 }
