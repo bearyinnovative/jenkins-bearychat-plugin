@@ -16,7 +16,7 @@
 
   <artifactId>bearychat</artifactId>
   <packaging>hpi</packaging>
-  <version>2.2-SNAPSHOT</version>
+  <version>3.0-SHAPSHOT</version>
   <name>BearyChat Plugin</name>
   <description>A Build status publisher that notifies channels on a BearyChat team</description>
   <url>http://wiki.jenkins-ci.org/display/JENKINS/BearyChat+Plugin</url>
@@ -191,6 +191,11 @@
       <id>yuanbohan</id>
       <name>Yuanbo Han</name>
       <email>yuanbo.han@bearyinnovative.com</email>
+    </developer>
+    <developer>
+      <id>shonenada</id>
+      <name>Yaoda Liu</name>
+      <email>shonenada@bearyinnovative.com</email>
     </developer>
   </developers>
 </project>
