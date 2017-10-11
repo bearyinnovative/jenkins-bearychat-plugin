@@ -11,10 +11,7 @@
         <f:entry field="channel" title="Channel">
             <f:textbox />
         </f:entry>
-        <f:entry field="token" title="Integration Token">
-            <f:textbox />
-        </f:entry>
-        <f:entry field="teamDomain" title="Team Domain">
+        <f:entry field="webhook" title="Webhook URL">
             <f:textbox />
         </f:entry>
         <f:entry field="failOnError">

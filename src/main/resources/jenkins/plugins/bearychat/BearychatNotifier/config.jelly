@@ -1,58 +1,54 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
          xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <f:entry title="Notify Build Start">
-        <f:checkbox name="bearychatStartNotification" value="true" checked="${instance.getStartNotification()}"/>
+    <f:entry title="${%Notify.Started}">
+        <f:checkbox name="isNotifyOnStarting" value="true" checked="${instance.isNotifyOnStarting()}"/>
     </f:entry>
 
-    <f:entry title="Notify Aborted">
-        <f:checkbox name="bearychatNotifyAborted" value="true" checked="${instance.getNotifyAborted()}"/>
+    <f:entry title="${%Notify.Aborted}">
+        <f:checkbox name="isNotifyOnAborted" value="true" checked="${instance.isNotifyOnAborted()}"/>
     </f:entry>
 
-    <f:entry title="Notify Failure">
-        <f:checkbox name="bearychatNotifyFailure" value="true" checked="${instance.getNotifyFailure()}"/>
+    <f:entry title="${%Notify.Failure}">
+        <f:checkbox name="isNotifyOnFailure" value="true" checked="${instance.isNotifyOnFailure()}"/>
     </f:entry>
 
-    <f:entry title="Notify Not Built">
-        <f:checkbox name="bearychatNotifyNotBuilt" value="true" checked="${instance.getNotifyNotBuilt()}"/>
+    <f:entry title="${%Notify.NotBuilt}">
+        <f:checkbox name="isNotifyOnNotBuilt" value="true" checked="${instance.isNotifyOnNotBuilt()}"/>
     </f:entry>
 
-    <f:entry title="Notify Success">
-        <f:checkbox name="bearychatNotifySuccess" value="true" checked="${instance.getNotifySuccess()}"/>
+    <f:entry title="${%Notify.Success}">
+        <f:checkbox name="isNotifyOnSuccess" value="true" checked="${instance.isNotifyOnSuccess()}"/>
     </f:entry>
 
-    <f:entry title="Notify Unstable">
-        <f:checkbox name="bearychatNotifyUnstable" value="true" checked="${instance.getNotifyUnstable()}"/>
+    <f:entry title="${%Notify.Unstable}">
+        <f:checkbox name="isNotifyOnUnstable" value="true" checked="${instance.isNotifyOnUnstable()}"/>
     </f:entry>
 
-    <f:entry title="Notify Back To Normal">
-        <f:checkbox name="bearychatNotifyBackToNormal" value="true" checked="${instance.getNotifyBackToNormal()}"/>
+    <f:entry title="${%Notify.BackToNormal}">
+        <f:checkbox name="isNotifyOnBackToNormal" value="true" checked="${instance.isNotifyOnBackToNormal()}"/>
     </f:entry>
 
     <f:advanced>
-        <f:optionalBlock name="includeBearychatCustomMessage" title="Custom Message" checked="${instance.includeBearychatCustomMessage()}">
-            <f:entry title="Start" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
-                <f:textarea name="bearychatCustomMessage" value="${instance.getBearychatCustomMessage()}"/>
+        <f:optionalBlock name="isIncludeCustomMessage" title="${%enableCustomMessage}" checked="${instance.isIncludeCustomMessage()}">
+            <f:entry title="${%StartedCustomMessage}" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatCustomMessage.html">
+                <f:textarea name="customStartMessage" value="${instance.getCustomStartMessage()}"/>
             </f:entry>
-            <f:entry title="End" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatEndCustomMessage.html">
-                 <f:textarea name="bearychatEndCustomMessage" value="${instance.getBearychatEndCustomMessage()}"/>
+            <f:entry title="${%CompletedCustomMessage}" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatEndCustomMessage.html">
+                 <f:textarea name="customEndMessage" value="${instance.getCustomEndMessage()}"/>
             </f:entry>
         </f:optionalBlock>
 
-        <f:entry title="Team Subdomain" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatTeamDomain.html">
-            <f:textbox name="bearychatTeamDomain" value="${instance.getTeamDomain()}"/>
+        <f:entry title="Webhook" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatWebhook.html">
+            <f:textbox name="webhook" value="${instance.getWebhook()}"/>
         </f:entry>
 
-        <f:entry title="Integration Token" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatToken.html">
-            <f:textbox name="bearychatToken" value="${instance.getAuthToken()}"/>
-        </f:entry>
-
-        <f:entry title="Project Channel" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatRoom.html">
-            <f:textbox name="bearychatRoom" value="${instance.getRoom()}"/>
+        <f:entry title="${%Channel}" help="${rootURL}/plugin/bearychat/help-projectConfig-bearychatChannel.html">
+            <f:textbox name="channel" value="${instance.getChannel()}"/>
         </f:entry>
 
         <f:validateButton
-            title="${%Test Connection}" progress="${%Testing...}"
-            method="testConnection" with="bearychatTeamDomain,bearychatToken,bearychatRoom"/>
+            title="${%TestConnection}" progress="${%Testing}..."
+            method="testConnection" with="webhook,channel"/>
     </f:advanced>
 </j:jelly>

@@ -1,17 +1,17 @@
 package jenkins.plugins.bearychat;
 
-import jenkins.plugins.bearychat.StandardBearychatService;
+import jenkins.plugins.bearychat.StandardBearyChatService;
 import org.junit.Before;
 import org.junit.Test;
 
-public class StandardBearychatServiceTest {
+public class StandardBearyChatServiceTest {
 
     /**
      * Publish should generally not rethrow exceptions, or it will cause a build job to fail at end.
      */
     @Test
     public void publishWithBadHostShouldNotRethrowExceptions() {
-        StandardBearychatService service = new StandardBearychatService("foo", "token", "general");
+        StandardBearyChatService service = new StandardBearyChatService("foo", "token", "general");
         service.setHost("hostvaluethatwillcausepublishtofail");
         service.publish("message");
     }
@@ -21,7 +21,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void invalidTeamDomainShouldFail() {
-        StandardBearychatService service = new StandardBearychatService("my", "token", "general");
+        StandardBearyChatService service = new StandardBearyChatService("my", "token", "general");
         service.publish("message");
     }
 
@@ -30,7 +30,7 @@ public class StandardBearychatServiceTest {
      */
     @Test
     public void invalidTokenShouldFail() {
-        StandardBearychatService service = new StandardBearychatService("beary", "token", "general");
+        StandardBearyChatService service = new StandardBearyChatService("beary", "token", "general");
         service.publish("message");
     }
 }
