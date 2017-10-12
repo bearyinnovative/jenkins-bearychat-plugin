@@ -16,7 +16,7 @@ public class StandardBearyChatService implements BearyChatService {
 
     private static final Logger logger = Logger.getLogger(StandardBearyChatService.class.getName());
 
-    public static String VERSION = "3.0";
+    public static final String VERSION = "3.0";
 
     private String webhook;
     private String channel;

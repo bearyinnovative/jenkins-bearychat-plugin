@@ -36,11 +36,11 @@ public class Helper {
 
     private static final int MAX_COMMIT_MESSAGES = 5;
 
-    public static String COLOR_GREEN = "#008800";
-    public static String COLOR_RED = "#FF0000";
-    public static String COLOR_YELLOW = "#FFFF00";
-    public static String COLOR_BLUE = "#0080FF";
-    public static String COLOR_GREY = "#808080";
+    public static final String COLOR_GREEN = "#008800";
+    public static final String COLOR_RED = "#FF0000";
+    public static final String COLOR_YELLOW = "#FFFF00";
+    public static final String COLOR_BLUE = "#0080FF";
+    public static final String COLOR_GREY = "#808080";
 
     public static String escape(String string) {
         string = string.replace("&", "&amp;");
@@ -61,8 +61,12 @@ public class Helper {
 
         try {
             previousBuild = build.getProject().getLastBuild().getPreviousBuild();
+        } catch (NullPointerException e) {
+            logger.info("get previous build failure");
+            return STATUS_UNKNOWN;
         } catch (Exception e) {
             logger.info("get previous build failure");
+            return STATUS_UNKNOWN;
         }
 
         Run previousSuccessfulBuild = build.getPreviousSuccessfulBuild();
